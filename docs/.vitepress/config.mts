@@ -6,6 +6,7 @@ export default withMermaid(
     title: 'murlog docs',
     description: '1人1インスタンスの ActivityPub マイクロブログ',
     lang: 'ja',
+    base: '/docs/',
 
     themeConfig: {
       search: {
