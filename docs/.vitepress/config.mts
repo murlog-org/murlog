@@ -15,7 +15,7 @@ export default withMermaid(
 
       nav: [
         { text: 'プロダクト概要', link: '/overview' },
-        { text: 'murlog API', link: '/murlog-api' },
+        { text: 'はじめかた', link: '/getting-started' },
       ],
 
       sidebar: [
