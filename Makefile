@@ -11,7 +11,7 @@ build:
 	go build -ldflags '$(LDFLAGS)' -o $(BIN) $(CMD)
 
 serve: build
-	./$(BIN) serve
+	MURLOG_WEB_DIR=../web/dist ./$(BIN) serve
 
 cgi: build
 	./$(BIN) cgi

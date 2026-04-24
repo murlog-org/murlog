@@ -157,6 +157,7 @@ func (s *sqliteStore) insertPost(ctx context.Context, p *murlog.Post) error {
 	if err != nil {
 		return fmt.Errorf("create post: %w", err)
 	}
+	s.syncPostTags(ctx, p)
 	return nil
 }
 
@@ -174,6 +175,7 @@ func (s *sqliteStore) UpdatePost(ctx context.Context, p *murlog.Post) error {
 	if err != nil {
 		return fmt.Errorf("update post: %w", err)
 	}
+	s.syncPostTags(ctx, p)
 	return nil
 }
 
@@ -215,6 +217,17 @@ func (s *sqliteStore) refreshPostCount(ctx context.Context, personaID id.ID) {
 		UPDATE personas SET post_count = (SELECT COUNT(*) FROM posts WHERE persona_id = ? AND origin = 'local')
 		WHERE id = ?`, personaID.Bytes(), personaID.Bytes()); err != nil {
 		log.Printf("refreshPostCount: %v", err)
+	}
+}
+
+// syncPostTags syncs the post_tags table with the post's hashtags.
+// post_tags テーブルを投稿のハッシュタグと同期する。
+func (s *sqliteStore) syncPostTags(ctx context.Context, p *murlog.Post) {
+	s.db.ExecContext(ctx, `DELETE FROM post_tags WHERE post_id = ?`, p.ID.Bytes())
+	tags := p.Hashtags()
+	for _, tag := range tags {
+		s.db.ExecContext(ctx, `INSERT OR IGNORE INTO post_tags (post_id, tag) VALUES (?, ?)`,
+			p.ID.Bytes(), strings.ToLower(tag))
 	}
 }
 
@@ -263,35 +276,48 @@ func (s *sqliteStore) ListReplies(ctx context.Context, inReplyToURI string, curs
 }
 
 // ListPostsByHashtag returns posts containing the given hashtag, newest first.
+// Uses the post_tags join table for indexed lookup.
 // localOnly=true restricts to local posts only (for public pages).
 // 指定ハッシュタグを含む投稿を新しい順に返す。
+// post_tags テーブルの JOIN でインデックス検索。
 // localOnly=true はローカル投稿のみに限定 (公開ページ用)。
 func (s *sqliteStore) ListPostsByHashtag(ctx context.Context, tag string, cursor id.ID, limit int, localOnly bool) ([]*murlog.Post, error) {
-	pattern := `%"` + tag + `"%`
 	originFilter := ""
 	if localOnly {
-		originFilter = " AND origin = 'local'"
+		originFilter = " AND p.origin = 'local'"
 	}
 	var rows *sql.Rows
 	var err error
 
 	if cursor.IsNil() {
 		rows, err = s.db.QueryContext(ctx, `
-			SELECT `+postColumns+`
-			FROM posts WHERE hashtags_json LIKE ? AND visibility IN (0, 1)`+originFilter+`
-			ORDER BY created_at DESC LIMIT ?`,
-			pattern, limit)
+			SELECT `+prefixedPostColumns("p.")+`
+			FROM posts p JOIN post_tags pt ON pt.post_id = p.id
+			WHERE pt.tag = ? AND p.visibility IN (0, 1)`+originFilter+`
+			ORDER BY p.id DESC LIMIT ?`,
+			strings.ToLower(tag), limit)
 	} else {
 		rows, err = s.db.QueryContext(ctx, `
-			SELECT `+postColumns+`
-			FROM posts WHERE hashtags_json LIKE ? AND visibility IN (0, 1)`+originFilter+` AND id < ?
-			ORDER BY created_at DESC LIMIT ?`,
-			pattern, cursor.Bytes(), limit)
+			SELECT `+prefixedPostColumns("p.")+`
+			FROM posts p JOIN post_tags pt ON pt.post_id = p.id
+			WHERE pt.tag = ? AND p.visibility IN (0, 1)`+originFilter+` AND p.id < ?
+			ORDER BY p.id DESC LIMIT ?`,
+			strings.ToLower(tag), cursor.Bytes(), limit)
 	}
 	if err != nil {
 		return nil, err
 	}
 	return scanRows(rows, scanPost)
+}
+
+// prefixedPostColumns returns postColumns with a table prefix (e.g. "p.").
+// テーブルプレフィックス付きの postColumns を返す。
+func prefixedPostColumns(prefix string) string {
+	cols := strings.Split(postColumns, ", ")
+	for i, c := range cols {
+		cols[i] = prefix + c
+	}
+	return strings.Join(cols, ", ")
 }
 
 // ListPostsByActorURI returns posts by a remote actor URI, newest first.
