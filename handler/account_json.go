@@ -21,10 +21,10 @@ type accountJSON struct {
 	AvatarURL      string               `json:"avatar_url,omitempty"`
 	HeaderURL      string               `json:"header_url,omitempty"`
 	FeaturedURL    string               `json:"featured_url,omitempty"`
-	Primary        bool                 `json:"primary,omitempty"`
-	Locked         bool                 `json:"locked,omitempty"`
-	ShowFollows    bool                 `json:"show_follows,omitempty"`
-	Discoverable   bool                 `json:"discoverable,omitempty"`
+	Primary        bool                 `json:"primary"`
+	Locked         bool                 `json:"locked"`
+	ShowFollows    bool                 `json:"show_follows"`
+	Discoverable   bool                 `json:"discoverable"`
 	PostCount      int                  `json:"post_count"`
 	FollowingCount int                  `json:"following_count"`
 	FollowersCount int                  `json:"followers_count"`
