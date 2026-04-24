@@ -1,0 +1,16 @@
+<div class="screen">
+  <div class="card" style="padding:0">
+    <div class="profile-body">
+      <h1>#{{tag}}</h1>
+    </div>
+  </div>
+  <div class="posts">
+  {{#if posts}}
+  {{#each posts}}
+  {{> post-article showStats=true}}
+  {{/each}}
+  {{else}}
+  <p class="empty">{{t "public.no_posts"}}</p>
+  {{/if}}
+  </div>
+</div>

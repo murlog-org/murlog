@@ -1,0 +1,40 @@
+<div class="screen">
+  <div class="card" style="padding:0">
+    {{#if headerURL}}<div class="profile-header"><img src="{{headerURL}}" alt=""></div>{{/if}}
+    <div class="profile-body">
+      <div class="profile-identity">
+        {{#if avatarURL}}<img class="avatar" src="{{avatarURL}}" alt="{{displayName}}">
+        {{/if}}
+        <div class="profile-name">
+          <h1>{{displayName}}</h1>
+          <p class="handle">@{{username}}@{{domain}}</p>
+        </div>
+      </div>
+      {{#if summary}}<div class="bio">{{{summary}}}</div>{{/if}}
+      {{#if fields}}
+      <dl class="profile-fields">
+        {{#each fields}}
+        <div class="profile-field">
+          <dt>{{name}}</dt>
+          <dd>{{{autoLink value}}}</dd>
+        </div>
+        {{/each}}
+      </dl>
+      {{/if}}
+      <div class="profile-stats">
+        <span><strong>{{postCount}}</strong> {{t "public.posts"}}</span>
+        <a href="{{profileURL}}/following" class="profile-stat-link"><strong>{{followingCount}}</strong> {{t "public.following"}}</a>
+        <a href="{{profileURL}}/followers" class="profile-stat-link"><strong>{{followersCount}}</strong> {{t "public.followers"}}</a>
+      </div>
+    </div>
+  </div>
+  <div class="posts">
+  {{#if posts}}
+  {{#each posts}}
+  {{> post-article}}
+  {{/each}}
+  {{else}}
+  <p class="empty">{{t "public.no_posts"}}</p>
+  {{/if}}
+  </div>
+</div>

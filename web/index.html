@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>murlog</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="manifest" href="/dist/manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="/dist/apple-touch-icon.png">
+    <meta name="theme-color" content="#161618">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>body{margin:0;background:#f5f5f7}body.ssr #app{opacity:0}@media(prefers-color-scheme:dark){body{background:#1c1c1e}}</style>
+  </head>
+  <body class="ssr">
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>navigator.serviceWorker?.register("/dist/sw.js").catch(()=>{})</script>
+  </body>
+</html>

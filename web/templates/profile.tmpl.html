@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Title}}</title>
+<meta property="og:title" content="{{.Title}}">
+<meta property="og:description" content="{{.Description}}">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="{{.ProfileURL}}">
+<meta property="og:image" content="{{if .AvatarURL}}{{.AvatarURL}}{{else}}{{.BaseURL}}/ogp.png{{end}}">
+<meta property="og:site_name" content="{{.Domain}}">
+{{if .RobotsContent}}<meta name="robots" content="{{.RobotsContent}}">
+{{end}}<link rel="alternate" type="application/activity+json" href="{{.ProfileURL}}">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="__VITE_CSS__">
+<link id="theme-css-default" rel="stylesheet" href="{{.ThemeCSS}}">
+</head>
+<style>body.ssr #app{opacity:0}@media(prefers-color-scheme:dark){body.ssr{background:#161618}}</style>
+<body class="ssr">
+<div id="app">
+  <div class="ssr-content">
+    <div class="screen">
+      <div class="card" style="padding:0">
+        {{if .HeaderURL}}<div class="profile-header"><img src="{{.HeaderURL}}" alt=""></div>{{end}}
+        <div class="profile-body">
+          <div class="profile-identity">
+            {{if .AvatarURL}}<img class="avatar" src="{{.AvatarURL}}" alt="{{.DisplayName}}">{{end}}
+            <div class="profile-name">
+              <h1>{{.DisplayName}}</h1>
+              <p class="handle">@{{.Username}}@{{.Domain}}</p>
+            </div>
+          </div>
+          {{if .Summary}}<div class="bio">{{.Summary}}</div>{{end}}
+          {{if .Fields}}
+          <dl class="profile-fields">
+            {{range .Fields}}
+            <div class="profile-field">
+              <dt>{{.Name}}</dt>
+              <dd>{{.Value}}</dd>
+            </div>
+            {{end}}
+          </dl>
+          {{end}}
+        </div>
+      </div>
+      <div class="posts">
+      {{if .Posts}}
+      {{range .Posts}}
+      <article class="card">
+        <div class="post-header">
+          <div class="post-author">
+            <span class="post-author-name">{{$.DisplayName}}</span>
+          </div>
+          <a href="{{.Permalink}}"><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.CreatedAt.Format "2006-01-02 15:04"}}</time></a>
+        </div>
+        <div class="post-content">{{.Content}}</div>
+      </article>
+      {{end}}
+      {{else}}
+      <p class="empty">{{call .T "public.no_posts"}}</p>
+      {{end}}
+      </div>
+    </div>
+  </div>
+</div>
+<script id="ssr-data" type="application/json">{{.SSRData}}</script>
+<script type="module" src="__VITE_JS__"></script>
+</body>
+</html>

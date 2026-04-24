@@ -1,0 +1,23 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    :root { --dot: #1d1d1f; --accent: #3a7ca5; }
+    @media (prefers-color-scheme: dark) {
+      :root { --dot: #e5e5e7; --accent: #5aaddb; }
+    }
+  </style>
+  <circle cx="56" cy="52" r="11" fill="var(--dot)" opacity="0.35"/>
+  <circle cx="120" cy="52" r="11" fill="var(--dot)" opacity="0.35"/>
+  <circle cx="184" cy="52" r="11" fill="var(--dot)" opacity="0.35"/>
+  <circle cx="56" cy="90" r="13" fill="var(--dot)" opacity="0.5"/>
+  <circle cx="88" cy="90" r="13" fill="var(--dot)" opacity="0.5"/>
+  <circle cx="120" cy="90" r="13" fill="var(--dot)" opacity="0.5"/>
+  <circle cx="152" cy="90" r="13" fill="var(--dot)" opacity="0.5"/>
+  <circle cx="184" cy="90" r="13" fill="var(--dot)" opacity="0.5"/>
+  <circle cx="56" cy="132" r="15" fill="var(--dot)" opacity="0.7"/>
+  <circle cx="120" cy="132" r="15" fill="var(--dot)" opacity="0.7"/>
+  <circle cx="184" cy="132" r="15" fill="var(--dot)" opacity="0.7"/>
+  <circle cx="56" cy="176" r="17" fill="var(--dot)"/>
+  <circle cx="120" cy="176" r="17" fill="var(--dot)"/>
+  <circle cx="184" cy="176" r="17" fill="var(--dot)"/>
+  <circle cx="184" cy="214" r="18" fill="var(--accent)"/>
+</svg>

@@ -1,0 +1,47 @@
+# Build
+/dist/
+*.exe
+
+# Data
+/data/
+
+
+# Config
+murlog.ini
+.htaccess
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Vite
+web/dist/
+
+# VitePress
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# Release build artifacts (covered by /dist/ above)
+
+# Docker build artifacts
+docker/*.cgi
+docker/dist/
+docker/htaccess
+
+# e2e
+tests/e2e/test-results/
+
+# Claude Code
+.claude/settings.local.json
+CLAUDE.md
+AGENTS.md

@@ -1,0 +1,65 @@
+<article class="card">
+  {{#if pinned}}<div class="post-label"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M12 17v5"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24z"/></svg> {{t "public.pinned"}}</div>{{/if}}
+  {{#if reblogLabel}}<div class="post-label"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> {{reblogLabel}} {{t "public.reblogged"}}</div>{{/if}}
+  {{#if in_reply_to_uri}}<div class="post-label"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> {{t "public.replied"}} {{#if in_reply_to_post}}<a href="{{in_reply_to_post.url}}">{{in_reply_to_post.actor_name}}</a>{{/if}}</div>{{/if}}
+  <div class="post-header">
+    <div class="post-author">
+      {{#if avatarURL}}<a href="{{profileURL}}"><img class="post-avatar" src="{{avatarURL}}" alt="" width="40" height="40"></a>{{/if}}
+      <div>
+        <a href="{{profileURL}}" class="post-author-name">{{displayName}}</a>
+        <span class="handle">{{handle}}</span>
+      </div>
+    </div>
+    <a href="{{permalink}}"><time datetime="{{isoDate createdAt}}">{{formatDate createdAt}}</time></a>
+  </div>
+  {{#if summary}}
+  <details class="post-cw"{{#if cwOpen}} open{{/if}}>
+    <summary>{{summary}}</summary>
+    <div class="post-content">{{{content}}}</div>
+    {{#if attachments}}
+    <div class="{{mediaGridClass attachments}}">
+      {{#each attachments}}
+      <a href="{{url}}" target="_blank" rel="noopener"><img src="{{url}}" alt="{{alt}}" loading="lazy" /></a>
+      {{/each}}
+    </div>
+    {{/if}}
+  </details>
+  {{else}}
+  {{#if sensitive}}
+  <details class="post-cw"{{#if cwOpen}} open{{/if}}>
+    <summary>{{t "my.post.sensitive"}}</summary>
+    <div class="post-content">{{{content}}}</div>
+    {{#if attachments}}
+    <div class="{{mediaGridClass attachments}}">
+      {{#each attachments}}
+      <a href="{{url}}" target="_blank" rel="noopener"><img src="{{url}}" alt="{{alt}}" loading="lazy" /></a>
+      {{/each}}
+    </div>
+    {{/if}}
+  </details>
+  {{else}}
+  <div class="post-content">{{{content}}}</div>
+  {{#if attachments}}
+  <div class="{{mediaGridClass attachments}}">
+    {{#each attachments}}
+    <a href="{{url}}" target="_blank" rel="noopener"><img src="{{url}}" alt="{{alt}}" loading="lazy" /></a>
+    {{/each}}
+  </div>
+  {{/if}}
+  {{/if}}
+  {{/if}}
+  {{#if showStats}}
+  {{#if favouritesCount}}
+  <div class="post-stats">
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg> {{favouritesCount}}</span>
+    {{#if reblogsCount}}<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> {{reblogsCount}}</span>{{/if}}
+  </div>
+  {{else}}
+  {{#if reblogsCount}}
+  <div class="post-stats">
+    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> {{reblogsCount}}</span>
+  </div>
+  {{/if}}
+  {{/if}}
+  {{/if}}
+</article>
