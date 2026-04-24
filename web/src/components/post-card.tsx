@@ -425,55 +425,60 @@ export function PostCard({
 					{displayPost.favourites_count > 0 &&
 						` ${displayPost.favourites_count}`}
 				</button>
-				<span class="post-stat post-stat-action">
-					<Icon name="share" />
-				</span>
-				{!isReblogWrapper &&
-					(actions.onPin || actions.onDelete || actions.onEditStart) && (
-						<DropdownMenu class="post-stat post-stat-action dot-menu">
-							{post.origin === "local" && actions.onPin && (
-								<>
+				{!isReblogWrapper && (
+					<DropdownMenu class="post-stat post-stat-action dot-menu">
+						{displayPost.url && (
+							<a
+								href="#"
+								onClick={(e) => {
+									e.preventDefault();
+									const url = displayPost.url!.startsWith("http")
+										? displayPost.url!
+										: location.origin + displayPost.url!;
+									navigator.clipboard.writeText(url);
+								}}
+							>
+								{t("my.post.copy_link") || "Copy link"}
+							</a>
+						)}
+						{post.origin === "local" && actions.onPin && (
+							<>
+								<a
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										actions.onPin!(post);
+									}}
+								>
+									{post.pinned ? t("my.post.unpin") : t("my.post.pin")}
+								</a>
+								{actions.onEditStart && (
 									<a
 										href="#"
 										onClick={(e) => {
 											e.preventDefault();
-											actions.onPin!(post);
+											actions.onEditStart!(post);
 										}}
 									>
-										{post.pinned ? t("my.post.unpin") : t("my.post.pin")}
+										{t("my.post.edit")}
 									</a>
-									{actions.onEditStart && (
-										<a
-											href="#"
-											onClick={(e) => {
-												e.preventDefault();
-												actions.onEditStart!(post);
-											}}
-										>
-											{t("my.post.edit")}
-										</a>
-									)}
-									{actions.onDelete && (
-										<a
-											href="#"
-											class="dot-menu-danger"
-											onClick={(e) => {
-												e.preventDefault();
-												actions.onDelete!(post.id);
-											}}
-										>
-											{t("my.post.delete")}
-										</a>
-									)}
-								</>
-							)}
-							{post.origin === "remote" && (
-								<a href="#" onClick={(e) => e.preventDefault()}>
-									{t("my.post.copy_link") || "Copy link"}
-								</a>
-							)}
-						</DropdownMenu>
-					)}
+								)}
+								{actions.onDelete && (
+									<a
+										href="#"
+										class="dot-menu-danger"
+										onClick={(e) => {
+											e.preventDefault();
+											actions.onDelete!(post.id);
+										}}
+									>
+										{t("my.post.delete")}
+									</a>
+								)}
+							</>
+						)}
+					</DropdownMenu>
+				)}
 			</div>
 		</div>
 	);

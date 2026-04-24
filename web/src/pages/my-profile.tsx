@@ -2,12 +2,14 @@
 // 内部プロフィールページ — ローカル/リモートユーザーの投稿をリアクション付きで表示。
 
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { ComposeBox } from "../components/compose-box";
 import { ErrorRetry } from "../components/error-retry";
 import { Loading } from "../components/loading";
 import type { Post } from "../components/post-card";
 import { PostCard } from "../components/post-card";
 import { useAsyncLoad } from "../hooks/use-async-load";
 import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
+import { useReply } from "../hooks/use-reply";
 import { call, callOrThrow } from "../lib/api";
 import { load as loadI18n, t } from "../lib/i18n";
 import type { Account } from "../lib/types";
@@ -40,6 +42,7 @@ export function MyProfile({ username }: Props) {
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
 	const [error, setError] = useState("");
+	const { replyTo, handleReply, clearReply } = useReply();
 	const loader = useAsyncLoad();
 	const [following, setFollowing] = useState<{
 		is: boolean;
@@ -363,6 +366,17 @@ export function MyProfile({ username }: Props) {
 				</div>
 			)}
 
+			{replyTo && (
+				<ComposeBox
+					replyTo={replyTo}
+					onClearReply={clearReply}
+					onPosted={() => {
+						clearReply();
+						loadInitial();
+					}}
+				/>
+			)}
+
 			{/* Posts / 投稿一覧 */}
 			{posts.map((post) => (
 				<PostCard
@@ -371,6 +385,7 @@ export function MyProfile({ username }: Props) {
 					actions={{
 						onFavourite: handleFavourite,
 						onReblog: handleReblog,
+						onReply: handleReply,
 					}}
 					expanded={expandedPosts.has(post.id)}
 					onToggleExpand={(id) =>

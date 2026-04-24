@@ -2,12 +2,14 @@
 // 内部タグページ — 特定ハッシュタグの投稿をリアクション付きで表示。
 
 import { useCallback, useEffect, useState } from "preact/hooks";
+import { ComposeBox } from "../components/compose-box";
 import { ErrorRetry } from "../components/error-retry";
 import { Loading } from "../components/loading";
 import type { Post } from "../components/post-card";
 import { PostCard } from "../components/post-card";
 import { useAsyncLoad } from "../hooks/use-async-load";
 import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
+import { useReply } from "../hooks/use-reply";
 import { call, callOrThrow } from "../lib/api";
 import { load as loadI18n } from "../lib/i18n";
 
@@ -23,6 +25,7 @@ export function MyTagPage({ tag }: Props) {
 	const [hasMore, setHasMore] = useState(true);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
+	const { replyTo, handleReply, clearReply } = useReply();
 	const loader = useAsyncLoad();
 
 	const loadInitial = useCallback(() => {
@@ -121,11 +124,26 @@ export function MyTagPage({ tag }: Props) {
 
 			{loader.error && <ErrorRetry onRetry={loader.retry} />}
 
+			{replyTo && (
+				<ComposeBox
+					replyTo={replyTo}
+					onClearReply={clearReply}
+					onPosted={() => {
+						clearReply();
+						loadInitial();
+					}}
+				/>
+			)}
+
 			{posts.map((post) => (
 				<PostCard
 					key={post.id}
 					post={post}
-					actions={{ onFavourite: handleFavourite, onReblog: handleReblog }}
+					actions={{
+						onFavourite: handleFavourite,
+						onReblog: handleReblog,
+						onReply: handleReply,
+					}}
 					expanded={expandedPosts.has(post.id)}
 					onToggleExpand={toggleExpand}
 				/>

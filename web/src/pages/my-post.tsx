@@ -8,6 +8,7 @@ import { Loading } from "../components/loading";
 import type { Post } from "../components/post-card";
 import { PostCard } from "../components/post-card";
 import { useAsyncLoad } from "../hooks/use-async-load";
+import { useReply } from "../hooks/use-reply";
 import { call, callOrThrow } from "../lib/api";
 import { load as loadI18n } from "../lib/i18n";
 
@@ -24,7 +25,7 @@ type ThreadData = {
 
 export function MyPost({ id: postId }: Props) {
 	const [thread, setThread] = useState<ThreadData | null>(null);
-	const [replyTo, setReplyTo] = useState<Post | null>(null);
+	const { replyTo, handleReply, clearReply } = useReply();
 	const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
 	const loader = useAsyncLoad();
 
@@ -79,11 +80,6 @@ export function MyPost({ id: postId }: Props) {
 		}));
 	};
 
-	const handleReply = (p: Post) => {
-		setReplyTo(p);
-		window.scrollTo({ top: 0, behavior: "smooth" });
-	};
-
 	const actions = {
 		onFavourite: handleFavourite,
 		onReblog: handleReblog,
@@ -108,9 +104,9 @@ export function MyPost({ id: postId }: Props) {
 			{replyTo && (
 				<ComposeBox
 					replyTo={replyTo}
-					onClearReply={() => setReplyTo(null)}
+					onClearReply={clearReply}
 					onPosted={() => {
-						setReplyTo(null);
+						clearReply();
 						loadPost();
 					}}
 				/>

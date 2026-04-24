@@ -8,6 +8,7 @@ import { PullIndicator } from "../components/pull-indicator";
 import { useAsyncLoad } from "../hooks/use-async-load";
 import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 import { usePullToRefresh } from "../hooks/use-pull-to-refresh";
+import { useReply } from "../hooks/use-reply";
 import {
 	call,
 	callBatch,
@@ -21,7 +22,7 @@ export function My({ path }: { path?: string }) {
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editContent, setEditContent] = useState("");
 	const [error, setError] = useState("");
-	const [replyTo, setReplyTo] = useState<Post | null>(null);
+	const { replyTo, handleReply, clearReply } = useReply();
 	const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
 	const [hasMore, setHasMore] = useState(true);
 	const [loadingMore, setLoadingMore] = useState(false);
@@ -216,9 +217,9 @@ export function My({ path }: { path?: string }) {
 			{/* Compose / 投稿フォーム */}
 			<ComposeBox
 				replyTo={replyTo}
-				onClearReply={() => setReplyTo(null)}
+				onClearReply={clearReply}
 				onPosted={() => {
-					setReplyTo(null);
+					clearReply();
 					loadPosts();
 				}}
 			/>
@@ -231,10 +232,7 @@ export function My({ path }: { path?: string }) {
 					actions={{
 						onFavourite: handleFavourite,
 						onReblog: handleReblog,
-						onReply: (p) => {
-							setReplyTo(p);
-							window.scrollTo({ top: 0, behavior: "smooth" });
-						},
+						onReply: handleReply,
 						onPin: handlePin,
 						onDelete: handleDelete,
 						onEditStart: handleEditStart,
