@@ -4,9 +4,9 @@
 let loggedIn = false;
 
 export function setLoggedIn(v: boolean): void {
-  loggedIn = v;
+	loggedIn = v;
 }
 
 export function isLoggedIn(): boolean {
-  return loggedIn;
+	return loggedIn;
 }

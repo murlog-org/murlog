@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node scripts/inject-assets.mjs",
+    "build": "biome check src/ && tsc && vite build && node scripts/inject-assets.mjs",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "biome check src/",
+    "lint:fix": "biome check src/ --fix"
   },
   "dependencies": {
     "dompurify": "^3.3.3",
@@ -17,6 +19,7 @@
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.13",
     "@preact/preset-vite": "^2.9.0",
     "@types/dompurify": "^3.0.5",
     "@types/qrcode": "^1.5.6",
