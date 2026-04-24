@@ -50,12 +50,18 @@ export default withMermaid(
           ],
         },
         { text: 'セキュリティ', link: '/security' },
-        { text: 'テスト', link: '/testing' },
-        { text: 'ベンチマーク', link: '/benchmark' },
+        {
+          text: '開発',
+          collapsed: false,
+          items: [
+            { text: 'テスト', link: '/testing' },
+            { text: 'ベンチマーク', link: '/benchmark' },
+          ],
+        },
       ],
 
       socialLinks: [
-        { icon: 'github', link: 'https://github.com/alarky/murlog' },
+        { icon: 'github', link: 'https://github.com/murlog-org/murlog' },
       ],
     },
   })
