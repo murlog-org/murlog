@@ -1,0 +1,66 @@
+# リリースワークフロー — タグ push で CGI zip をビルドし GitHub Release を作成
+# Release workflow — builds CGI zips on tag push and creates a GitHub Release
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Verify tag matches version.txt
+        run: |
+          VERSION=$(cat version.txt)
+          TAG="${{ github.ref_name }}"
+          if [ "v${VERSION}" != "${TAG}" ]; then
+            echo "::error::Tag ${TAG} does not match version.txt (v${VERSION})"
+            exit 1
+          fi
+
+      - name: Install Node dependencies
+        run: cd web && npm ci
+
+      - name: Run tests
+        run: |
+          go test ./...
+          cd web && npx vitest run
+
+      - name: Build CGI zips
+        run: |
+          make dist-cgi
+          # linux-arm64 は配布対象外なので除外
+          # Exclude linux-arm64 from release artifacts
+          rm -f dist/release/murlog-cgi-linux-arm64.zip
+
+      - name: Rename zips with version
+        run: |
+          VERSION=$(cat version.txt)
+          cd dist/release
+          mv murlog-cgi-freebsd-amd64.zip murlog-v${VERSION}-freebsd-amd64.zip
+          mv murlog-cgi-linux-amd64.zip   murlog-v${VERSION}-linux-amd64.zip
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            dist/release/murlog-v*.zip \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
