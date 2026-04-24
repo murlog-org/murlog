@@ -46,11 +46,11 @@ export default withMermaid(
             { text: 'fediverse 互換性', link: '/activitypub/compatibility' },
           ],
         },
-        { text: 'セキュリティ', link: '/security' },
         {
           text: '開発',
           collapsed: false,
           items: [
+            { text: 'セキュリティ', link: '/security' },
             { text: '認証', link: '/auth' },
             { text: 'murlog API', link: '/murlog-api' },
             { text: 'CSS 設計', link: '/css-design' },
