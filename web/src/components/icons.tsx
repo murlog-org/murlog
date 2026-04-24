@@ -4,7 +4,7 @@
 type Props = { size?: number; class?: string };
 
 const paths: Record<string, string> = {
-	reply: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+	reply: "M3 9l4-4 4 4|M7 5v10a4 4 0 0 0 4 4h10",
 	reblog:
 		"M17 1l4 4-4 4|M3 11V9a4 4 0 0 1 4-4h14|M7 23l-4-4 4-4|M21 13v2a4 4 0 0 1-4 4H3",
 	heart:
