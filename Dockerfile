@@ -2,6 +2,8 @@
 
 # --- Stage 1: Build SPA ---
 FROM node:24-alpine AS web
+WORKDIR /app
+COPY version.txt ./
 WORKDIR /app/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
