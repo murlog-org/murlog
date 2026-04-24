@@ -19,6 +19,7 @@ export default withMermaid(
 
       sidebar: [
         { text: 'プロダクト概要', link: '/overview' },
+        { text: 'はじめかた', link: '/getting-started' },
         {
           text: 'アーキテクチャ',
           collapsed: false,
