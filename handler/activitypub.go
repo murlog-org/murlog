@@ -56,6 +56,10 @@ func (h *Handler) handleActor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Vary: Accept ensures CDN/proxies cache HTML and JSON-LD separately.
+	// Vary: Accept で CDN/プロキシが HTML と JSON-LD を別々にキャッシュする。
+	w.Header().Set("Vary", "Accept")
+
 	if !isActivityPubRequest(r) {
 		h.renderProfile(w, r, persona)
 		return
@@ -67,6 +71,7 @@ func (h *Handler) handleActor(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
+	w.Header().Set("Cache-Control", "max-age=300, public")
 	json.NewEncoder(w).Encode(actor)
 }
 
@@ -1103,6 +1108,7 @@ func (h *Handler) handleOutbox(w http.ResponseWriter, r *http.Request) {
 // handleFollowersCollection serves the Followers collection with real data.
 // Followers コレクションを実データで返す。
 func (h *Handler) handleFollowersCollection(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Vary", "Accept")
 	// ブラウザからのアクセスは SPA にフォールバック。
 	// Browser requests fall back to SPA.
 	if !isActivityPubRequest(r) {
@@ -1143,6 +1149,7 @@ func (h *Handler) handleFollowersCollection(w http.ResponseWriter, r *http.Reque
 // handleFollowingCollection serves the Following collection with real data.
 // Following コレクションを実データで返す。
 func (h *Handler) handleFollowingCollection(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Vary", "Accept")
 	// ブラウザからのアクセスは SPA にフォールバック。
 	// Browser requests fall back to SPA.
 	if !isActivityPubRequest(r) {

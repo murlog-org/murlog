@@ -400,6 +400,10 @@ func (h *Handler) handlePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Vary: Accept ensures CDN/proxies cache HTML and JSON-LD separately.
+	// Vary: Accept で CDN/プロキシが HTML と JSON-LD を別々にキャッシュする。
+	w.Header().Set("Vary", "Accept")
+
 	if isActivityPubRequest(r) {
 		h.renderPostActivityPub(w, r, persona, post)
 		return
