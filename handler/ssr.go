@@ -2,23 +2,26 @@ package handler
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
 
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/murlog-org/murlog"
 	"github.com/murlog-org/murlog/i18n"
 	"github.com/murlog-org/murlog/id"
 	"github.com/murlog-org/murlog/media"
-	"github.com/microcosm-cc/bluemonday"
 )
+
+//go:embed templates/*.tmpl
+var templatesFS embed.FS
 
 // htmlPolicy is the shared HTML sanitization policy.
 // SPA 側の DOMPurify 許可リストと同等のホワイトリスト。
@@ -204,35 +207,26 @@ func (h *Handler) robotsMetaContent(ctx context.Context) string {
 	return result
 }
 
-// loadSSRTemplates loads SSR templates from WebDir/templates/.
-// WebDir/templates/ から SSR テンプレートを読み込む。
+// loadSSRTemplates loads SSR templates from embedded files.
+// 埋め込みファイルから SSR テンプレートを読み込む。
 func (h *Handler) loadSSRTemplates() {
-	dir := filepath.Join(h.cfg.WebDir, "templates")
-
-	var err error
-	h.profileTmpl, err = template.ParseFiles(filepath.Join(dir, "profile.tmpl"))
-	if err != nil {
-		log.Printf("ssr: profile.tmpl not loaded: %v", err)
-		h.profileTmpl = nil
+	load := func(name string) *template.Template {
+		data, err := templatesFS.ReadFile("templates/" + name)
+		if err != nil {
+			log.Printf("ssr: %s not loaded: %v", name, err)
+			return nil
+		}
+		tmpl, err := template.New(name).Parse(string(data))
+		if err != nil {
+			log.Printf("ssr: %s parse error: %v", name, err)
+			return nil
+		}
+		return tmpl
 	}
-
-	h.postTmpl, err = template.ParseFiles(filepath.Join(dir, "post.tmpl"))
-	if err != nil {
-		log.Printf("ssr: post.tmpl not loaded: %v", err)
-		h.postTmpl = nil
-	}
-
-	h.homeTmpl, err = template.ParseFiles(filepath.Join(dir, "home.tmpl"))
-	if err != nil {
-		log.Printf("ssr: home.tmpl not loaded: %v", err)
-		h.homeTmpl = nil
-	}
-
-	h.tagTmpl, err = template.ParseFiles(filepath.Join(dir, "tag.tmpl"))
-	if err != nil {
-		log.Printf("ssr: tag.tmpl not loaded: %v", err)
-		h.tagTmpl = nil
-	}
+	h.profileTmpl = load("profile.tmpl")
+	h.postTmpl = load("post.tmpl")
+	h.homeTmpl = load("home.tmpl")
+	h.tagTmpl = load("tag.tmpl")
 }
 
 // renderHome renders the SSR home page with all personas and their posts.

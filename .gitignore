@@ -1,6 +1,7 @@
 # Build
 /dist/
 *.exe
+handler/templates/
 
 # Data
 /data/

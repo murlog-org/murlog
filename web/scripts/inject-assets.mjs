@@ -23,9 +23,10 @@ const buildHash = Date.now().toString(36);
 const jsPath = entry.file ? `/${entry.file}?v=${buildHash}` : "";
 const cssPath = entry.css?.[0] ? `/${entry.css[0]}?v=${buildHash}` : "";
 
-// Process templates.
+// Process templates — output to handler/templates/ for Go embed.
+// テンプレートを handler/templates/ に出力 (Go embed 用)。
 const srcDir = join(__dirname, "..", "templates");
-const outDir = join(distDir, "templates");
+const outDir = join(__dirname, "..", "..", "handler", "templates");
 mkdirSync(outDir, { recursive: true });
 
 let count = 0;
