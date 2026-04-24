@@ -1,0 +1,32 @@
+  # Block access to sensitive files. / 機密ファイルへのアクセスをブロック。
+  <FilesMatch "\.(ini|toml|db|db-wal|db-shm|db-journal|reset)$">
+    Require all denied
+  </FilesMatch>
+
+  # Error page for CGI crash. / CGI クラッシュ時のエラーページ。
+  ErrorDocument 500 /500.html
+
+  # httpoxy 対策 (CVE-2016-5385): Proxy ヘッダを除去。
+  # httpoxy mitigation: strip Proxy header before CGI.
+  RequestHeader unset Proxy early
+
+  # Pass Authorization header to CGI. / Authorization ヘッダーを CGI に渡す。
+  CGIPassAuth On
+
+  # Route requests through CGI. / CGI 経由でリクエストをルーティング。
+  DirectoryIndex murlog.cgi
+  RewriteEngine On
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  # Block access to data directory. / データディレクトリへのアクセスをブロック。
+  RewriteRule ^data/ - [F,L]
+  # Static files in dist/ served directly by Apache.
+  # dist/ 配下の静的ファイルを Apache で直接配信。
+  RewriteCond dist%{REQUEST_URI} -f
+  RewriteRule ^(.*)$ dist/$1 [L]
+  # Serve other existing files directly. / その他の実ファイルは Apache が直接配信。
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+  # Everything else goes to CGI via PATH_INFO. / それ以外は全て CGI へ (PATH_INFO 経由)。
+  # PATH_INFO 方式はさくらライトプラン (suexec 制約) でも動作する。
+  # PATH_INFO style works on Sakura Light plan (suexec restriction).
+  RewriteRule ^(.*)$ /murlog.cgi/$1 [L,QSA]
