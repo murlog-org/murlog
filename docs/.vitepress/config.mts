@@ -19,7 +19,6 @@ export default withMermaid(
 
       sidebar: [
         { text: 'プロダクト概要', link: '/overview' },
-        { text: 'ドメインモデル', link: '/domain' },
         {
           text: 'アーキテクチャ',
           collapsed: false,
@@ -55,6 +54,7 @@ export default withMermaid(
           text: '開発',
           collapsed: false,
           items: [
+            { text: 'ドメインモデル', link: '/domain' },
             { text: '多言語対応', link: '/i18n' },
             { text: 'セキュリティ', link: '/security' },
             { text: '認証', link: '/auth' },
