@@ -26,7 +26,6 @@ export default withMermaid(
         { text: 'CGI 動作アーキテクチャ', link: '/cgi' },
         { text: '多言語対応', link: '/i18n' },
         { text: '認証', link: '/auth' },
-        { text: 'パッケージ構成', link: '/packages' },
         { text: 'murlog API', link: '/murlog-api' },
         {
           text: 'ActivityPub',
