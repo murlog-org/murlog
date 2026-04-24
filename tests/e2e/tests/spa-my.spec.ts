@@ -160,12 +160,12 @@ test.describe.serial("SPA — My page", () => {
     await expect(page.locator(".profile-body")).toBeVisible({ timeout: 10000 });
   });
 
-  test("remote profile — /users/@user@host shows remote profile", async ({ page }) => {
+  test("remote profile — /my/users/@user@host shows error for unreachable server", async ({ page }) => {
     await login(page);
-    await page.goto("/users/@bob@remote.example");
-    // Remote actor lookup may fail (no real server), so check for acct display or error state.
-    // リモート Actor の解決は失敗しうるので、acct 表示またはエラー状態を確認。
-    await expect(page.getByText("@bob@remote.example")).toBeVisible({ timeout: 10000 });
+    await page.goto("/my/users/@bob@remote.example");
+    // Remote actor lookup fails (no real server) — verify error state is shown.
+    // リモート Actor の解決は失敗する (実サーバーなし) — エラー状態の表示を確認。
+    await expect(page.getByRole("button", { name: /retry|リトライ/i })).toBeVisible({ timeout: 10000 });
   });
 
   test("local profile — /users/alice shows local profile", async ({ page }) => {
