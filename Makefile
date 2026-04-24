@@ -112,8 +112,8 @@ define make-cgi-zip
 	chmod 755 $(STAGING)/murlog.bin
 	printf '#!/bin/sh\nexec env GOMAXPROCS=1 "$$(dirname "$$0")/murlog.bin" cgi\n' > $(STAGING)/murlog.cgi
 	chmod 755 $(STAGING)/murlog.cgi
-	cp dist/cgi/htaccess $(STAGING)/.htaccess
-	cp dist/cgi/500.html $(STAGING)/500.html
+	cp deploy/cgi/htaccess $(STAGING)/.htaccess
+	cp deploy/cgi/500.html $(STAGING)/500.html
 	cp -r web/dist/* $(STAGING)/dist/
 	rm -f $(STAGING)/dist/.vite/manifest.json
 	rm -rf $(STAGING)/dist/.vite
@@ -127,7 +127,7 @@ docker-cgi: web-build
 	GOOS=linux GOARCH=$(DOCKER_GOARCH) go build $(GOFLAGS) -o docker/murlog.cgi $(CMD)
 	rm -rf docker/dist
 	cp -r web/dist docker/dist
-	cp dist/cgi/htaccess docker/htaccess
+	cp deploy/cgi/htaccess docker/htaccess
 	cd docker && docker compose build
 
 docker-cgi-test: docker-cgi

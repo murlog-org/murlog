@@ -1,6 +1,5 @@
 # Build
 /dist/
-!/dist/cgi/
 *.exe
 
 # Data

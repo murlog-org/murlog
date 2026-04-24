@@ -45,7 +45,7 @@ public_html/
 
 ## .htaccess
 
-`.htaccess` は `dist/cgi/htaccess` をマスターとして配布する。CGI にリクエストを流す `.htaccess` がないと CGI 自体が実行されないため、自動生成に頼れない。
+`.htaccess` は `deploy/cgi/htaccess` をマスターとして配布する。CGI にリクエストを流す `.htaccess` がないと CGI 自体が実行されないため、自動生成に頼れない。
 
 ```apache
 # 機密ファイルの保護 / Protection of sensitive files
