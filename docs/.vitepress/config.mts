@@ -20,9 +20,15 @@ export default withMermaid(
       sidebar: [
         { text: 'プロダクト概要', link: '/overview' },
         { text: 'ドメインモデル', link: '/domain' },
-        { text: 'サーバーアーキテクチャ', link: '/architecture' },
-        { text: 'Web フロントエンド', link: '/frontend' },
-        { text: 'CGI 動作アーキテクチャ', link: '/cgi' },
+        {
+          text: 'アーキテクチャ',
+          collapsed: false,
+          items: [
+            { text: 'サーバーアーキテクチャ', link: '/architecture' },
+            { text: 'Web フロントエンド', link: '/frontend' },
+            { text: 'CGI 動作アーキテクチャ', link: '/cgi' },
+          ],
+        },
         {
           text: 'ActivityPub',
           link: '/activitypub/',
