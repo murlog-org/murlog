@@ -113,20 +113,29 @@ export function MyProfile({ username }: Props) {
 			}
 
 			// Check follow state for remote actors. / リモート Actor のフォロー状態を確認。
+			let isFollowing = false;
 			if (isRemote && actorInfo?.uri) {
 				const { result } = await call<{ id: string } | null>("follows.check", {
 					target_uri: actorInfo.uri,
 				});
 				if (result) {
 					setFollowing({ is: true, id: result.id });
+					isFollowing = true;
 				} else {
 					setFollowing({ is: false });
 				}
 			}
 
 			// Load initial posts.
-			// 初期投稿を読み込む。
-			if (isRemote && actorInfo) {
+			// フォロー済み → ローカル DB (posts.list_by_actor)、未フォロー → outbox fetch。
+			if (isRemote && actorInfo && isFollowing && actorInfo.uri) {
+				const fetched = await callOrThrow<Post[]>("posts.list_by_actor", {
+					actor_uri: actorInfo.uri,
+					limit: PAGE_SIZE,
+				});
+				setPosts(fetched);
+				setHasMore(fetched.length >= PAGE_SIZE);
+			} else if (isRemote && actorInfo) {
 				const result = await callOrThrow<{
 					posts: OutboxPost[];
 					next?: string;
@@ -158,7 +167,19 @@ export function MyProfile({ username }: Props) {
 		if (loadingMore) return;
 		setLoadingMore(true);
 		try {
-			if (isRemote) {
+			if (isRemote && following?.is && actorRef.current?.uri) {
+				// Followed: paginate from local DB.
+				const lastId = posts[posts.length - 1]?.id;
+				if (!lastId) return;
+				const { result } = await call<Post[]>("posts.list_by_actor", {
+					actor_uri: actorRef.current.uri,
+					cursor: lastId,
+					limit: PAGE_SIZE,
+				});
+				const fetched = result ?? [];
+				setPosts((prev) => [...prev, ...fetched]);
+				setHasMore(fetched.length >= PAGE_SIZE);
+			} else if (isRemote) {
 				if (!nextCursorRef.current) return;
 				const { result } = await call<{ posts: OutboxPost[]; next?: string }>(
 					"actors.outbox",
@@ -188,7 +209,7 @@ export function MyProfile({ username }: Props) {
 		} finally {
 			setLoadingMore(false);
 		}
-	}, [username, acct, isRemote, posts, loadingMore, outboxToPost]);
+	}, [username, acct, isRemote, posts, loadingMore, following, outboxToPost]);
 
 	const sentinelRef = useInfiniteScroll({
 		hasMore,

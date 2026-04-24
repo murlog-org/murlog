@@ -101,8 +101,9 @@ func (h *Handler) registerRPCMethods() map[string]methodDef {
 		"personas.update": {handler: h.rpcPersonasUpdate, public: false},
 
 		// Posts
-		"posts.list":        {handler: h.rpcPostsList, public: true},
-		"posts.list_by_tag": {handler: h.rpcPostsListByTag, public: true},
+		"posts.list":          {handler: h.rpcPostsList, public: true},
+		"posts.list_by_tag":   {handler: h.rpcPostsListByTag, public: true},
+		"posts.list_by_actor": {handler: h.rpcPostsListByActor, public: false},
 		"posts.get":        {handler: h.rpcPostsGet, public: true},
 		"posts.get_thread": {handler: h.rpcPostsGetThread, public: true},
 		"posts.create":     {handler: h.rpcPostsCreate, public: false},

@@ -856,6 +856,40 @@ func (h *Handler) rpcPostsListByTag(ctx context.Context, params json.RawMessage)
 	return h.enrichPostJSONList(ctx, posts), nil
 }
 
+// rpcPostsListByActor handles posts.list_by_actor (authenticated only).
+// ローカル DB からリモート Actor の投稿を返す。
+func (h *Handler) rpcPostsListByActor(ctx context.Context, params json.RawMessage) (any, *rpcErr) {
+	type actorParams struct {
+		ActorURI string `json:"actor_uri"`
+		Cursor   string `json:"cursor,omitempty"`
+		Limit    int    `json:"limit,omitempty"`
+	}
+	req, rErr := parseParams[actorParams](params)
+	if rErr != nil {
+		return nil, rErr
+	}
+	if req.ActorURI == "" {
+		return nil, newRPCErr(codeInvalidParams, "actor_uri is required")
+	}
+	limit := clampLimit(req.Limit, 20, 40)
+
+	cursor := id.Nil
+	if req.Cursor != "" {
+		var err error
+		cursor, err = id.Parse(req.Cursor)
+		if err != nil {
+			return nil, newRPCErr(codeInvalidParams, "invalid cursor")
+		}
+	}
+
+	posts, err := h.store.ListPostsByActorURI(ctx, req.ActorURI, cursor, limit)
+	if err != nil {
+		return nil, newRPCErr(codeInternalError, "internal error")
+	}
+
+	return h.enrichPostJSONList(ctx, posts), nil
+}
+
 // urlRe matches bare URLs in plain text (not already inside an <a> tag).
 // プレーンテキスト中の生 URL にマッチする（<a> タグ内は除外）。
 var urlRe = regexp.MustCompile(`https?://[^\s<>"]+`)

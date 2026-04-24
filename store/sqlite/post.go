@@ -294,6 +294,32 @@ func (s *sqliteStore) ListPostsByHashtag(ctx context.Context, tag string, cursor
 	return scanRows(rows, scanPost)
 }
 
+// ListPostsByActorURI returns posts by a remote actor URI, newest first.
+// リモート Actor URI の投稿を新しい順に返す。
+func (s *sqliteStore) ListPostsByActorURI(ctx context.Context, actorURI string, cursor id.ID, limit int) ([]*murlog.Post, error) {
+	var rows *sql.Rows
+	var err error
+
+	// Exclude DM (visibility 3). / DM (visibility 3) を除外。
+	if cursor.IsNil() {
+		rows, err = s.db.QueryContext(ctx, `
+			SELECT `+postColumns+`
+			FROM posts WHERE actor_uri = ? AND visibility != 3
+			ORDER BY id DESC LIMIT ?`,
+			actorURI, limit)
+	} else {
+		rows, err = s.db.QueryContext(ctx, `
+			SELECT `+postColumns+`
+			FROM posts WHERE actor_uri = ? AND visibility != 3 AND id < ?
+			ORDER BY id DESC LIMIT ?`,
+			actorURI, cursor.Bytes(), limit)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return scanRows(rows, scanPost)
+}
+
 func scanPost(sc scanner) (*murlog.Post, error) {
 	var p murlog.Post
 	var rawID, rawPersonaID, rawReblogOfPostID []byte

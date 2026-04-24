@@ -34,6 +34,7 @@ type Store interface {
 	GetPostsByURIs(ctx context.Context, uris []string) (map[string]*murlog.Post, error)
 	ListReplies(ctx context.Context, inReplyToURI string, cursor id.ID, limit int) ([]*murlog.Post, error)
 	ListPostsByHashtag(ctx context.Context, tag string, cursor id.ID, limit int, localOnly bool) ([]*murlog.Post, error)
+	ListPostsByActorURI(ctx context.Context, actorURI string, cursor id.ID, limit int) ([]*murlog.Post, error)
 
 	// Follow (local -> remote) / フォロー (ローカル → リモート)
 	GetFollow(ctx context.Context, fid id.ID) (*murlog.Follow, error)
