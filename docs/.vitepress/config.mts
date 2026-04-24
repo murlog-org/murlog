@@ -22,7 +22,6 @@ export default withMermaid(
         { text: 'ドメインモデル', link: '/domain' },
         { text: 'サーバーアーキテクチャ', link: '/architecture' },
         { text: 'Web フロントエンド', link: '/frontend' },
-        { text: 'CSS 設計', link: '/css-design' },
         { text: 'CGI 動作アーキテクチャ', link: '/cgi' },
         { text: '多言語対応', link: '/i18n' },
         { text: '認証', link: '/auth' },
@@ -54,6 +53,7 @@ export default withMermaid(
           text: '開発',
           collapsed: false,
           items: [
+            { text: 'CSS 設計', link: '/css-design' },
             { text: 'テスト', link: '/testing' },
             { text: 'ベンチマーク', link: '/benchmark' },
           ],
