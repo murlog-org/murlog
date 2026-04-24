@@ -9,6 +9,7 @@ import type { Post } from "../components/post-card";
 import { Loading } from "../components/loading";
 import { ErrorRetry } from "../components/error-retry";
 import { useAsyncLoad } from "../hooks/use-async-load";
+import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 
 type Props = {
   path?: string;
@@ -22,7 +23,6 @@ export function MyTagPage({ tag }: Props) {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const loader = useAsyncLoad();
 
   const loadInitial = useCallback(() => {
@@ -49,19 +49,12 @@ export function MyTagPage({ tag }: Props) {
     finally { setLoadingMore(false); }
   }, [tag, posts, loadingMore]);
 
-  // Infinite scroll. / 無限スクロール。
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) loadMore();
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, loadMore]);
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading: loadingMore,
+    onLoadMore: loadMore,
+    ready: loader.ready,
+  });
 
   const handleFavourite = async (post: Post) => {
     const method = post.favourited ? "favourites.delete" : "favourites.create";

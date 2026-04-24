@@ -9,6 +9,7 @@ import type { Post } from "../components/post-card";
 import { Loading } from "../components/loading";
 import { ErrorRetry } from "../components/error-retry";
 import { useAsyncLoad } from "../hooks/use-async-load";
+import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 import type { Account } from "../lib/types";
 
 type Props = {
@@ -42,7 +43,6 @@ export function MyProfile({ username }: Props) {
   const loader = useAsyncLoad();
   const [following, setFollowing] = useState<{ is: boolean; id?: string } | null>(null);
   const [followLoading, setFollowLoading] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const nextCursorRef = useRef<string | null>(null);
   const actorRef = useRef<Account | null>(null);
   const isRemote = username?.startsWith("@") && username.includes("@", 1);
@@ -158,21 +158,12 @@ export function MyProfile({ username }: Props) {
     }
   }, [username, acct, isRemote, posts, loadingMore, outboxToPost]);
 
-  // Infinite scroll. / 無限スクロール。
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
-          loadMore();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, loadMore]);
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading: loadingMore,
+    onLoadMore: loadMore,
+    ready: loader.ready,
+  });
 
   // Reaction handlers. / リアクションハンドラ。
   const handleFavourite = async (post: Post) => {

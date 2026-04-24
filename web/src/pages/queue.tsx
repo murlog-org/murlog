@@ -3,6 +3,7 @@ import { call, redirectIfUnauthorized } from "../lib/api";
 import { load as loadI18n, t } from "../lib/i18n";
 import { formatTime } from "../lib/format";
 import { Loading } from "../components/loading";
+import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 
 type QueueStats = {
   pending: number;
@@ -62,8 +63,6 @@ export function QueuePage({ path }: { path?: string }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
   const fetchJobs = useCallback(async (status: string, cursor?: string) => {
     const params: Record<string, unknown> = { limit: PAGE_SIZE };
     if (status) params.status = status;
@@ -107,21 +106,12 @@ export function QueuePage({ path }: { path?: string }) {
     };
   }, [loadData]);
 
-  // Infinite scroll. / 無限スクロール。
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
-          loadMore();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, loadMore]);
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading: loadingMore,
+    onLoadMore: loadMore,
+    ready,
+  });
 
   const changeFilter = (f: string) => {
     setFilter(f);

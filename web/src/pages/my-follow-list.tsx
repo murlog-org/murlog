@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "preact/hooks";
 import { call } from "../lib/api";
+import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 import { sanitize } from "../lib/sanitize";
 import { Loading } from "../components/loading";
 import type { Account } from "../lib/types";
@@ -70,8 +71,6 @@ export function MyFollowList({ username, type = "following" }: Props) {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const nextCursorRef = useRef<string | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
   const isRemote = username?.startsWith("@") && username.includes("@", 1);
 
   useEffect(() => {
@@ -122,22 +121,12 @@ export function MyFollowList({ username, type = "following" }: Props) {
     setLoading(false);
   }, [isRemote, username, type]);
 
-  // Infinite scroll — observe sentinel element.
-  // 無限スクロール — センチネル要素を監視。
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, loading, loadMore]);
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading,
+    onLoadMore: loadMore,
+    ready: loaded,
+  });
 
   if (!loaded) return null;
 

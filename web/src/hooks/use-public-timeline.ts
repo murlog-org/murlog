@@ -1,9 +1,10 @@
 // Shared hook for public timeline pages with infinite scroll + theme rendering.
 // 無限スクロール + テーマ描画付き公開タイムラインページの共通フック。
 
-import { useRef, useState, useCallback, useEffect } from "preact/hooks";
+import { useRef, useState, useCallback } from "preact/hooks";
 import { loadTheme, renderTemplate, activatePublic } from "../lib/theme";
 import { type PersonaContext, mapPostsForTemplate } from "../lib/public-data";
+import { useInfiniteScroll } from "./use-infinite-scroll";
 
 type R = Record<string, unknown>;
 type ThemeCache = Awaited<ReturnType<typeof loadTheme>>;
@@ -39,7 +40,6 @@ export type InitResult = {
 export function usePublicTimeline(config: TimelineConfig) {
   const ref = useRef<HTMLDivElement>(null);
   const postsRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const lastPostIdRef = useRef<string | null>(null);
@@ -94,22 +94,11 @@ export function usePublicTimeline(config: TimelineConfig) {
     }
   }, [config]);
 
-  // IntersectionObserver for infinite scroll.
-  // 無限スクロール用の IntersectionObserver。
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, loading, loadMore]);
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading,
+    onLoadMore: loadMore,
+  });
 
   return { ref, sentinelRef, loading, hasMore, init, renderPage, mapPostsForTemplate, PAGE_SIZE };
 }

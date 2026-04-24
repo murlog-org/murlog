@@ -7,6 +7,7 @@ import { ComposeBox } from "../components/compose-box";
 import { PostCard, acctFromURI } from "../components/post-card";
 import type { Post } from "../components/post-card";
 import { useAsyncLoad } from "../hooks/use-async-load";
+import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 import { usePullToRefresh } from "../hooks/use-pull-to-refresh";
 import { PullIndicator } from "../components/pull-indicator";
 
@@ -21,7 +22,6 @@ export function My({ path }: { path?: string }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const loader = useAsyncLoad();
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 20;
 
   const loadPosts = useCallback(async (cursor?: string) => {
@@ -76,22 +76,19 @@ export function My({ path }: { path?: string }) {
     return () => { clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
   }, [pollUnread]);
 
-  // Infinite scroll — observe sentinel element.
-  // 無限スクロール — センチネル要素を監視。
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && posts.length > 0) {
-          loadPosts(posts[posts.length - 1].id);
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, posts, loadPosts]);
+  const postsRef = useRef(posts);
+  postsRef.current = posts;
+
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading: loadingMore,
+    onLoadMore: useCallback(() => {
+      if (postsRef.current.length > 0) {
+        loadPosts(postsRef.current[postsRef.current.length - 1].id);
+      }
+    }, [loadPosts]),
+    ready: loader.ready,
+  });
 
   if (!loader.ready) return null;
 

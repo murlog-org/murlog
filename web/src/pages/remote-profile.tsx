@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import { loadTheme, renderTemplate, getSSRData, activatePublic } from "../lib/theme";
 import { call, callBatch, isUnauthorized } from "../lib/api";
 import { Loading } from "../components/loading";
+import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 import type { Account } from "../lib/types";
 
 type Follow = {
@@ -44,7 +45,6 @@ type SSRRemoteData = {
 
 export function RemoteProfile({ acct }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -271,20 +271,11 @@ export function RemoteProfile({ acct }: Props) {
 
   // Infinite scroll.
   // 無限スクロール。
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, loading, loadMore]);
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading,
+    onLoadMore: loadMore,
+  });
 
   return (
     <>

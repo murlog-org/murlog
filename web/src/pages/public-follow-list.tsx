@@ -6,6 +6,7 @@ import { call } from "../lib/api";
 import { sanitize } from "../lib/sanitize";
 import { Loading } from "../components/loading";
 import { isLoggedIn } from "../lib/auth";
+import { useInfiniteScroll } from "../hooks/use-infinite-scroll";
 import type { Account } from "../lib/types";
 
 type Props = {
@@ -71,8 +72,6 @@ export function PublicFollowList({ username, type = "following" }: Props) {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const nextCursorRef = useRef<string | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
   const isRemote = username?.startsWith("@") && username.includes("@", 1);
 
   useEffect(() => {
@@ -125,22 +124,12 @@ export function PublicFollowList({ username, type = "following" }: Props) {
     setLoading(false);
   }, [isRemote, username, type]);
 
-  // Infinite scroll — observe sentinel element.
-  // 無限スクロール — センチネル要素を監視。
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, loading, loadMore]);
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading,
+    onLoadMore: loadMore,
+    ready: loaded,
+  });
 
   if (!loaded) return null;
 
