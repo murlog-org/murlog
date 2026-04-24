@@ -5,7 +5,7 @@
 ```
 ブラウザ → Apache
   ├─ 実ファイル (assets/, themes/) → Apache が直接配信 (CGI 不要)
-  ├─ 機密ファイル (.toml, .db 等) → Apache がブロック (CGI に到達しない)
+  ├─ 機密ファイル (.ini, .db 等) → Apache がブロック (CGI に到達しない)
   └─ それ以外 → .htaccess RewriteRule → murlog.cgi (Go バイナリ直接)
            ├─ /users/* (HTML) → SSR HTML (OGP + 本文 + SPA script)
            ├─ /my/*           → SPA index.html を返す
@@ -86,4 +86,4 @@ RewriteRule ^(.*)$ /murlog.cgi/$1 [L,QSA]
 
 **リライトルールの方式**: `/murlog.cgi/$1` (PATH_INFO 方式) を採用。Go の `net/http/cgi` は `REQUEST_URI` を優先的に使うため、PATH_INFO 経由でもリクエストパスは正しく解釈される。この方式はさくらライトプラン (suexec が RewriteRule → CGI 直接実行を拒否する環境) でも動作する。`murlog.cgi` へ直接リライトする方式 (`RewriteRule ^(.*)$ murlog.cgi [L,QSA]`) は suexec policy violation になるプランがある。
 
-**web_dir**: 開発時は `./web/dist` だが、CGI zip は `./dist/index.html` に配置。`murlog.toml` の `web_dir` は CGI 環境では `./dist` がデフォルト。`/assets/` は Apache 直配信、SPA fallback の `index.html` は Go が `dist/` から配信。
+**web_dir**: 開発時は `./web/dist` だが、CGI zip は `./dist/index.html` に配置。`murlog.ini` の `web_dir` は CGI 環境では `./dist` がデフォルト。`/assets/` は Apache 直配信、SPA fallback の `index.html` は Go が `dist/` から配信。

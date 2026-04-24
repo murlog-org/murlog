@@ -152,6 +152,6 @@ if !strings.HasPrefix(filePath, filepath.Clean(baseDir)+string(filepath.Separato
 
 CGI モード起動時に `.htaccess` を自動生成。以下のファイルへのブラウザアクセスをブロック:
 
-- `*.toml`（設定ファイル）
+- `*.ini`（設定ファイル）
 - `*.db`（データベース）
 - `*.reset`（パスワードリセットトークン）

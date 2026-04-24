@@ -57,18 +57,18 @@ graph TD
 
 ## 設定管理
 
-起動に必要な設定はTOMLファイル、アプリケーション設定はDBに格納。
+起動に必要な設定はINI ファイル、アプリケーション設定はDBに格納。
 
 | 保存先 | 内容 | 理由 |
 |--------|------|------|
-| `murlog.toml` | DB 接続情報 (`db_driver`, `data_dir`)、`media_path`、`web_dir`、`listen` | DB に接続する前に必要な情報。セットアップ Step 1 で生成 |
+| `murlog.ini` | DB 接続情報 (`db_driver`, `data_dir`)、`media_path`、`web_dir`、`listen` | DB に接続する前に必要な情報。セットアップ Step 1 で生成 |
 | DB `settings` テーブル | `domain`、`password_hash`、`setup_complete`、`last_password_reset_at` 等 | バックアップ時に DB ファイル1つで完結させるため |
 
-### murlog.toml（起動時設定）
+### murlog.ini（起動時設定）
 
 DB 接続情報とランタイム設定のみ。
 
-```toml
+```ini
 db_driver = "sqlite"
 data_dir = "./data"
 media_path = "./media"
@@ -95,18 +95,18 @@ listen = ":8080"
 設定ファイルも DB も存在しない状態から起動できる。WordPress のインストールウィザードと同様の 2 段階構成。
 
 **Step 1: サーバー設定** (`/admin/setup/server`)
-- `murlog.toml` が存在しない場合に表示
-- DB パス、メディアパスを入力 → `murlog.toml` を生成
-- 手動で `murlog.toml` を作成した場合はスキップされる
+- `murlog.ini` が存在しない場合に表示
+- DB パス、メディアパスを入力 → `murlog.ini` を生成
+- 手動で `murlog.ini` を作成した場合はスキップされる
 
 **Step 2: サイトセットアップ** (`/admin/setup`)
-- `murlog.toml` が存在し、DB の `setup_complete` が未設定の場合に表示
+- `murlog.ini` が存在し、DB の `setup_complete` が未設定の場合に表示
 - ドメイン名（`Host` ヘッダーから自動入力）、ペルソナ作成、パスワード設定
 - Migrate → ペルソナ作成 → パスワード保存 → `setup_complete = true`
 
 **setup guard**: 全リクエストの先頭でフェーズ判定し、未完了なら適切なステップにリダイレクト。`/admin/` パスはガードを通過する。
 
-**セキュリティ**: 起動時に `.htaccess` の存在を確認し、なければ自動生成。`.toml`・`.db`・`.reset` ファイルへのブラウザアクセスをブロックする `FilesMatch` ルールを含む。
+**セキュリティ**: 起動時に `.htaccess` の存在を確認し、なければ自動生成。`.ini`・`.db`・`.reset` ファイルへのブラウザアクセスをブロックする `FilesMatch` ルールを含む。
 
 ## DB マイグレーション
 
@@ -171,9 +171,9 @@ CGI request → レスポンス返却 → spawnWorker()
 goroutine ベースのため並列度を上げてもリソースコストはほぼゼロ（1 goroutine ≈ 4KB）。
 Mastodon (Sidekiq) のデフォルト 5、GoToSocial のデフォルト 8 と比較して、一人用サーバーとして妥当な範囲。
 
-`murlog.toml` で min/max をカスタマイズ可能:
+`murlog.ini` で min/max をカスタマイズ可能:
 
-```toml
+```ini
 worker_min_concurrency = 8    # デフォルト 8
 worker_max_concurrency = 32   # デフォルト 32
 ```

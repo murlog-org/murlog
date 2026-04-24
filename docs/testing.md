@@ -19,7 +19,7 @@
 |---|---|---|---|
 | `testutil_test.go` | — | — | 共通ヘルパー (`setupTestEnv`, `rpcCall`, `loginTestEnv` 等) |
 | `rpc_integration_test.go` | `TestRPCIntegration` | 83 | JSON-RPC API フルフロー (認証 → Personas → Posts → CW → Pin → Visibility → Favourites/Reblogs+カウント → Blocks → Domain Blocks → Media → Queue → 承認制フォロー → TOTP → Logout) |
-| `rpc_integration_test.go` | `TestSetupFlow` | 7 | セットアップフロー (toml 未生成 → Step 1 → Step 2 → 完了リダイレクト) |
+| `rpc_integration_test.go` | `TestSetupFlow` | 7 | セットアップフロー (ini 未生成 → Step 1 → Step 2 → 完了リダイレクト) |
 | `activitypub_test.go` | `TestActorEndpoint` 他 | 29 | ActivityPub: Actor (discoverable)/WebFinger/Inbox (Follow/Follow Locked/Undo/Create Note/Duplicate/Mention Tag/Reply+Mention/署名拒否(unsigned/invalid/tampered/missing-digest)/Block/Domain Block/Truncate)/Like/Undo Like/Announce/Undo Announce/Announce Remote/Collections (Outbox/Followers/Following + Hidden) |
 | `visibility_test.go` | `TestDetectVisibility` | 1 | detectVisibility: テーブル駆動で public/unlisted/followers/direct 判定 |
 | `rpc_test.go` | `TestTimelineHome` 他 | 8 | Timeline/Follows/Followers/Notifications CRUD/Batch limit/Content too long/Enrich equivalence/ValidateCursorHost |
@@ -116,7 +116,7 @@ env := setupTestEnv(t)
 
 セットアップ前状態のテスト環境を構築する。`TestSetupFlow` 用。
 
-- toml ファイル未作成 → `setupPhase() == SetupStep1`
+- ini ファイル未作成 → `setupPhase() == SetupStep1`
 - `setup_complete` 未設定
 - ペルソナ未作成
 
