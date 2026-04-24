@@ -23,7 +23,6 @@ export default withMermaid(
         { text: 'サーバーアーキテクチャ', link: '/architecture' },
         { text: 'Web フロントエンド', link: '/frontend' },
         { text: 'CGI 動作アーキテクチャ', link: '/cgi' },
-        { text: '多言語対応', link: '/i18n' },
         {
           text: 'ActivityPub',
           link: '/activitypub/',
@@ -50,6 +49,7 @@ export default withMermaid(
           text: '開発',
           collapsed: false,
           items: [
+            { text: '多言語対応', link: '/i18n' },
             { text: 'セキュリティ', link: '/security' },
             { text: '認証', link: '/auth' },
             { text: 'murlog API', link: '/murlog-api' },
