@@ -1,5 +1,30 @@
 # サーバーアーキテクチャ
 
+## 技術選定
+
+| 要素 | 選定 | 理由 |
+|------|------|------|
+| 言語 | Go | シングルバイナリ、クロスコンパイル容易、CGI対応 (`net/http/cgi`) |
+| DB | SQLite via [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite) | Pure Go実装のためcgo不要。クロスコンパイルが一発で通る |
+| ActivityPub | 自前実装 | 各サーバーの方言に柔軟に対応するため、ライブラリに縛られず実装をコントロールする |
+| SPA フレームワーク | [Preact](https://preactjs.com/) | React 互換で ~4KB (min+gz)。マイページ (/my/) の固定 UI に使用 |
+| テンプレートエンジン | [Handlebars](https://handlebarsjs.com/) | 公開ページのテーマレンダリング。SSR + クライアントサイドハイドレーション |
+| SPA ビルド | Vite | Preact 公式推奨。高速ビルド、Tree-shaking でバンドル最小化 |
+
+## 全体構成
+
+```
+[Go サーバー]
+  ├─ 公開ページ SSR (OGP + 本文 + SPA script)
+  ├─ murlog 独自 API /api/mur/v1/    … SPA が使用
+  ├─ ActivityPub
+  └─ ジョブキュー
+
+[SPA (静的ファイル、Go バイナリに含まない)]
+  ├─ 公開ページ (Handlebars テーマ)
+  └─ マイページ /my/ (Preact 固定 UI)
+```
+
 ## アーキテクチャ
 
 ```mermaid
