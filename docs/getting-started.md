@@ -2,10 +2,10 @@
 
 ## 必要なもの
 
-- 独自ドメイン (例: `example.com`)
 - 以下のいずれかのサーバー環境:
   - レンタルサーバー (さくら・Xserver 等、CGI 対応プラン)
-  - VPS / クラウドサーバー
+  - Linux / FreeBSD が動くサーバー (VPS・自宅サーバー・PaaS 等)
+- 独自ドメイン (任意。レンタルサーバー付属のドメインでも利用可)
 
 ## レンタルサーバー (CGI モード)
 
@@ -49,30 +49,11 @@ public_html/
 - ユーザー名・表示名
 - パスワード設定
 
-完了すると自分のプロフィールページが表示される。
+完了するとマイページにログインされる。
 
-## VPS / クラウドサーバー (serve モード)
+## serve モード (VPS・自宅サーバー等)
 
-### 1. ダウンロード
-
-[Releases](https://github.com/murlog-org/murlog/releases) からバイナリをダウンロード。
-
-```bash
-curl -L -o murlog https://github.com/murlog-org/murlog/releases/latest/download/murlog-linux-amd64
-chmod +x murlog
-```
-
-### 2. 起動
-
-```bash
-./murlog serve
-```
-
-デフォルトで `:8080` で起動。リバースプロキシ (nginx / Caddy 等) で HTTPS を終端する。
-
-### 3. セットアップ
-
-ブラウザで `https://yourdomain.com/` にアクセスし、CGI モードと同じウィザードで初期設定。
+> TBD: ビルド・配布方法を検討中。
 
 ## セットアップ後
 
