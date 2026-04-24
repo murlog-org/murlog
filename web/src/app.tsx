@@ -66,6 +66,7 @@ function HeaderMenu({ onAbout }: { onAbout: () => void }) {
 			<a href="/my/follow">{t("my.follow") || "Follow"}</a>
 			<a href="/my/blocks">{t("my.blocks") || "Blocks"}</a>
 			<a href="/my/settings">{t("my.settings") || "Settings"}</a>
+			<a href="/">{t("my.public_page") || "Public Page"}</a>
 			<a
 				href="#"
 				onClick={(e) => {
@@ -207,11 +208,11 @@ export function App() {
 			{!hideHeader.has(path) && (
 				<header class="header">
 					<a
-						href="/"
+						href={showAppHeader ? "/my/" : "/"}
 						class="header-brand"
 						onClick={(e) => {
 							e.preventDefault();
-							navigate("/");
+							navigate(showAppHeader ? "/my/" : "/");
 						}}
 					>
 						<Logo size={20} />
