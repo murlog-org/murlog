@@ -161,11 +161,19 @@ func (p *Persona) SetFields(fields []CustomField) {
 
 // Post is a note/article (local or remote).
 // 投稿（ローカルまたはリモート受信）。
+// ContentType represents the format of post content.
+// 投稿コンテンツの形式。
+const (
+	ContentTypeText = "text" // plain text (local posts) / プレーンテキスト (ローカル投稿)
+	ContentTypeHTML = "html" // HTML (remote posts) / HTML (リモート投稿)
+)
+
 type Post struct {
-	ID         id.ID
-	PersonaID  id.ID             // local: author, remote: receiving persona / ローカル:投稿者, リモート:受信先ペルソナ
-	Content    string            // HTML
-	ContentMap map[string]string // lang -> content for multilingual / 言語別コンテンツ
+	ID          id.ID
+	PersonaID   id.ID             // local: author, remote: receiving persona / ローカル:投稿者, リモート:受信先ペルソナ
+	Content     string            // source content (text or HTML depending on ContentType) / ソースコンテンツ
+	ContentType string            // "text" or "html" / コンテンツ形式
+	ContentMap  map[string]string // lang -> content for multilingual / 言語別コンテンツ
 	Visibility Visibility
 	Origin     string // "local", "remote", "system"
 	URI          string // ActivityPub URI (remote only) / AP URI (リモートのみ)

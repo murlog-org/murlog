@@ -13,7 +13,7 @@ import (
 	"github.com/murlog-org/murlog/id"
 )
 
-const postColumns = `id, persona_id, content, content_map, visibility, origin, uri, actor_uri, in_reply_to_uri, mentions_json, hashtags_json, reblogged_by_uri, reblog_of_post_id, summary, sensitive, created_at, updated_at`
+const postColumns = `id, persona_id, content, content_type, content_map, visibility, origin, uri, actor_uri, in_reply_to_uri, mentions_json, hashtags_json, reblogged_by_uri, reblog_of_post_id, summary, sensitive, created_at, updated_at`
 
 func (s *sqliteStore) GetPost(ctx context.Context, pid id.ID) (*murlog.Post, error) {
 	return scanPost(s.db.QueryRowContext(ctx, `
@@ -145,10 +145,14 @@ func (s *sqliteStore) insertPost(ctx context.Context, p *murlog.Post) error {
 	if err != nil {
 		return err
 	}
+	contentType := p.ContentType
+	if contentType == "" {
+		contentType = murlog.ContentTypeHTML
+	}
 	_, err = s.db.ExecContext(ctx, `
-		INSERT INTO posts (id, persona_id, content, content_map, visibility, origin, uri, actor_uri, in_reply_to_uri, mentions_json, hashtags_json, reblogged_by_uri, reblog_of_post_id, summary, sensitive, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		p.ID.Bytes(), p.PersonaID.Bytes(), p.Content, contentMapJSON,
+		INSERT INTO posts (id, persona_id, content, content_type, content_map, visibility, origin, uri, actor_uri, in_reply_to_uri, mentions_json, hashtags_json, reblogged_by_uri, reblog_of_post_id, summary, sensitive, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		p.ID.Bytes(), p.PersonaID.Bytes(), p.Content, contentType, contentMapJSON,
 		int(p.Visibility), origin, nullString(p.URI), nullString(p.ActorURI),
 		nullString(p.InReplyToURI), nullString(p.MentionsJSON), p.HashtagsJSON,
 		nullString(p.RebloggedByURI), nullBytes(p.ReblogOfPostID),
@@ -355,7 +359,7 @@ func scanPost(sc scanner) (*murlog.Post, error) {
 	var uri, actorURI, inReplyToURI, mentionsJSON, rebloggedByURI sql.NullString
 	var sensitive int
 	var createdAt, updatedAt string
-	err := sc.Scan(&rawID, &rawPersonaID, &p.Content, &contentMap, &visibility,
+	err := sc.Scan(&rawID, &rawPersonaID, &p.Content, &p.ContentType, &contentMap, &visibility,
 		&origin, &uri, &actorURI, &inReplyToURI, &mentionsJSON, &p.HashtagsJSON,
 		&rebloggedByURI, &rawReblogOfPostID, &p.Summary, &sensitive, &createdAt, &updatedAt)
 	if err != nil {

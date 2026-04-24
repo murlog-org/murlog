@@ -34,6 +34,7 @@ export type Post = {
 	id: string;
 	persona_id: string;
 	content: string;
+	content_source?: string;
 	summary?: string;
 	sensitive?: boolean;
 	visibility: string;

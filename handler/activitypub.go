@@ -1072,12 +1072,26 @@ func (h *Handler) handleOutbox(w http.ResponseWriter, r *http.Request) {
 			to, cc = cc, to
 		}
 
+		// Render content for AP delivery.
+		// AP 配送用にコンテンツをレンダリング。
+		noteContent := post.Content
+		noteContentMap := post.ContentMap
+		if post.ContentType == murlog.ContentTypeText {
+			noteContent = formatPostContent(post.Content, base)
+			if len(post.ContentMap) > 0 {
+				noteContentMap = make(map[string]string, len(post.ContentMap))
+				for lang, text := range post.ContentMap {
+					noteContentMap[lang] = formatPostContent(text, base)
+				}
+			}
+		}
+
 		note := activitypub.Note{
 			ID:           postURI,
 			Type:         "Note",
 			AttributedTo: actorURL,
-			Content:      post.Content,
-			ContentMap:   post.ContentMap,
+			Content:      noteContent,
+			ContentMap:   noteContentMap,
 			Summary:      post.Summary,
 			Sensitive:    post.Sensitive,
 			Published:    post.CreatedAt.UTC().Format(time.RFC3339),

@@ -18,7 +18,8 @@ import (
 type postJSON struct {
 	ID             string            `json:"id"`
 	PersonaID      string            `json:"persona_id"`
-	Content        string            `json:"content"`
+	Content        string            `json:"content"`                   // rendered HTML / 表示用 HTML
+	ContentSource  string            `json:"content_source,omitempty"`  // plain text for editing (text type only) / 編集用プレーンテキスト
 	ContentMap     map[string]string `json:"content_map,omitempty"`
 	Summary        string            `json:"summary,omitempty"`
 	Sensitive      bool              `json:"sensitive,omitempty"`
@@ -119,6 +120,20 @@ func (h *Handler) enrichPostJSON(ctx context.Context, p *murlog.Post) postJSON {
 func (h *Handler) enrichPostJSONWith(ctx context.Context, p *murlog.Post, persona *murlog.Persona, atts []*murlog.Attachment) postJSON {
 	pj := toPostJSON(p)
 	base := h.baseURLFromCtx(ctx)
+
+	// Render content based on content_type.
+	// content_type に基づいてコンテンツをレンダリング。
+	if p.ContentType == murlog.ContentTypeText {
+		pj.ContentSource = p.Content
+		pj.Content = formatPostContent(p.Content, base)
+		if len(p.ContentMap) > 0 {
+			rendered := make(map[string]string, len(p.ContentMap))
+			for lang, text := range p.ContentMap {
+				rendered[lang] = formatPostContent(text, base)
+			}
+			pj.ContentMap = rendered
+		}
+	}
 
 	if len(atts) > 0 {
 		pj.Attachments = make([]attachmentJSON, len(atts))
@@ -484,21 +499,16 @@ func (h *Handler) rpcPostsCreate(ctx context.Context, params json.RawMessage) (a
 	visibility := parseVisibility(req.Visibility)
 	now := time.Now()
 
-	// Auto-link URLs and hashtags in content.
-	// コンテンツ中の URL とハッシュタグを自動リンク化。
-	base := h.baseURLFromCtx(ctx)
-	linkedContent := hashtag.ReplaceWithHTML(autoLinkURLs(req.Content), base)
-	linkedMap := autoLinkURLsMap(req.ContentMap)
-	for lang, text := range linkedMap {
-		linkedMap[lang] = hashtag.ReplaceWithHTML(text, base)
-	}
+	// Store plain text as-is. HTML rendering is done at read time based on content_type.
+	// プレーンテキストをそのまま保存。HTML 変換は content_type に基づき読み出し時に行う。
 	tags := hashtag.ParseHashtags(req.Content)
 
 	post := &murlog.Post{
 		ID:           id.New(),
 		PersonaID:    personaID,
-		Content:      linkedContent,
-		ContentMap:   linkedMap,
+		Content:      req.Content,
+		ContentType:  murlog.ContentTypeText,
+		ContentMap:   req.ContentMap,
 		Summary:      req.Summary,
 		Sensitive:    req.Sensitive,
 		Visibility:   visibility,
@@ -566,23 +576,18 @@ func (h *Handler) rpcPostsUpdate(ctx context.Context, params json.RawMessage) (a
 		return nil, newRPCErr(codeNotFound, "post not found")
 	}
 
-	base := h.baseURLFromCtx(ctx)
 	if req.Content != nil {
 		if len([]rune(*req.Content)) > MaxPostContentLength {
 			return nil, newRPCErr(codeInvalidParams, "content too long")
 		}
-		post.Content = hashtag.ReplaceWithHTML(autoLinkURLs(*req.Content), base)
+		post.Content = *req.Content
 		tags := hashtag.ParseHashtags(*req.Content)
 		if len(tags) > 0 {
 			post.SetHashtags(tags)
 		}
 	}
 	if req.ContentMap != nil {
-		linked := autoLinkURLsMap(req.ContentMap)
-		for lang, text := range linked {
-			linked[lang] = hashtag.ReplaceWithHTML(text, base)
-		}
-		post.ContentMap = linked
+		post.ContentMap = req.ContentMap
 	}
 	if req.Summary != nil {
 		post.Summary = *req.Summary
@@ -907,10 +912,38 @@ func autoLinkURLsMap(m map[string]string) map[string]string {
 	return out
 }
 
+// formatPostContent converts plain text to HTML for post content.
+// Escapes HTML, auto-links URLs and hashtags, wraps in <p> with <br> for newlines.
+// プレーンテキストを投稿用 HTML に変換する。
+// HTML エスケープ、URL・ハッシュタグの自動リンク化、<p> で囲み改行は <br> に変換。
+// formatPostContent converts plain text to HTML for post content.
+// Auto-links URLs and hashtags (which handle their own escaping),
+// then converts remaining newlines to <br> and wraps in <p>.
+// プレーンテキストを投稿用 HTML に変換する。
+// URL・ハッシュタグは各関数内でエスケープ処理、改行は <br> に変換して <p> で囲む。
+func formatPostContent(text string, baseURL string) string {
+	escaped := html.EscapeString(text)
+	linked := autoLinkURLsEscaped(escaped)
+	withTags := hashtag.ReplaceWithHTML(linked, baseURL)
+	withBreaks := strings.ReplaceAll(withTags, "\n", "<br>")
+	return "<p>" + withBreaks + "</p>"
+}
+
+// autoLinkURLsEscaped converts bare URLs in already-escaped text to <a> links.
+// No additional escaping is applied since the input is pre-escaped.
+// エスケープ済みテキスト中の生 URL を <a> タグに変換する。
+func autoLinkURLsEscaped(text string) string {
+	return urlRe.ReplaceAllStringFunc(text, func(rawURL string) string {
+		trimmed := strings.TrimRight(rawURL, ".,;:!?)」』】）")
+		suffix := rawURL[len(trimmed):]
+		return `<a href="` + trimmed + `" rel="nofollow noopener" target="_blank">` + trimmed + `</a>` + suffix
+	})
+}
+
+// autoLinkURLs converts bare URLs in plain text to <a> HTML links.
+// プレーンテキスト中の生 URL を <a> タグに変換する。
 func autoLinkURLs(text string) string {
 	return urlRe.ReplaceAllStringFunc(text, func(rawURL string) string {
-		// Trim trailing punctuation that is likely not part of the URL.
-		// URL の一部でない末尾の句読点を除去。
 		trimmed := strings.TrimRight(rawURL, ".,;:!?)」』】）")
 		suffix := rawURL[len(trimmed):]
 		escaped := html.EscapeString(trimmed)

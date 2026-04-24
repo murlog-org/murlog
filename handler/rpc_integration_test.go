@@ -221,7 +221,7 @@ func TestRPCIntegration(t *testing.T) {
 		t.Run("posts.create — creates a post", func(t *testing.T) {
 			var post postJSON
 			rpcCallWithCookie(t, env, "posts.create", map[string]any{
-				"content": "<p>Hello from Go test!</p>", "visibility": "public",
+				"content": "Hello from Go test!", "visibility": "public",
 			}, &post, cookie)
 			if post.Content != "<p>Hello from Go test!</p>" {
 				t.Errorf("content = %q", post.Content)
@@ -254,7 +254,7 @@ func TestRPCIntegration(t *testing.T) {
 		t.Run("posts.update — updates content", func(t *testing.T) {
 			var post postJSON
 			rpcCallWithCookie(t, env, "posts.update", map[string]any{
-				"id": postID, "content": "<p>Updated!</p>",
+				"id": postID, "content": "Updated!",
 			}, &post, cookie)
 			if post.Content != "<p>Updated!</p>" {
 				t.Errorf("content = %q, want Updated!", post.Content)
@@ -290,7 +290,7 @@ func TestRPCIntegration(t *testing.T) {
 		t.Run("posts.create — with CW (summary + sensitive)", func(t *testing.T) {
 			var post postJSON
 			rpcCallWithCookie(t, env, "posts.create", map[string]any{
-				"content": "<p>Spoiler content</p>", "summary": "Spoiler alert", "sensitive": true,
+				"content": "Spoiler content", "summary": "Spoiler alert", "sensitive": true,
 			}, &post, cookie)
 			if post.Summary != "Spoiler alert" {
 				t.Errorf("summary = %q, want Spoiler alert", post.Summary)
@@ -338,8 +338,8 @@ func TestRPCIntegration(t *testing.T) {
 	t.Run("Pin", func(t *testing.T) {
 		// Create two posts for pin tests.
 		var post1, post2 postJSON
-		rpcCallWithCookie(t, env, "posts.create", map[string]any{"content": "<p>Pin me!</p>"}, &post1, cookie)
-		rpcCallWithCookie(t, env, "posts.create", map[string]any{"content": "<p>Pin me instead!</p>"}, &post2, cookie)
+		rpcCallWithCookie(t, env, "posts.create", map[string]any{"content": "Pin me!"}, &post1, cookie)
+		rpcCallWithCookie(t, env, "posts.create", map[string]any{"content": "Pin me instead!"}, &post2, cookie)
 
 		t.Run("posts.pin — pin first post", func(t *testing.T) {
 			var pinned postJSON
@@ -398,7 +398,7 @@ func TestRPCIntegration(t *testing.T) {
 	t.Run("Visibility", func(t *testing.T) {
 		var fPost postJSON
 		rpcCallWithCookie(t, env, "posts.create", map[string]any{
-			"content": "<p>Followers only</p>", "visibility": "followers",
+			"content": "Followers only", "visibility": "followers",
 		}, &fPost, cookie)
 
 		t.Run("posts.create — followers visibility", func(t *testing.T) {
@@ -433,7 +433,7 @@ func TestRPCIntegration(t *testing.T) {
 		// Create a fresh post for interaction tests.
 		// インタラクションテスト用に新しい投稿を作成。
 		var interactionPost postJSON
-		rpcCallWithCookie(t, env, "posts.create", map[string]any{"content": "<p>Like me!</p>"}, &interactionPost, cookie)
+		rpcCallWithCookie(t, env, "posts.create", map[string]any{"content": "Like me!"}, &interactionPost, cookie)
 		iPostID := interactionPost.ID
 
 		t.Run("favourites.create — likes a post", func(t *testing.T) {
@@ -698,7 +698,7 @@ func TestRPCIntegration(t *testing.T) {
 		t.Run("posts.create — with media attachment", func(t *testing.T) {
 			var post postJSON
 			rpcCallWithCookie(t, env, "posts.create", map[string]any{
-				"content": "<p>Post with image</p>", "visibility": "public",
+				"content": "Post with image", "visibility": "public",
 				"attachments": []string{attachmentID},
 			}, &post, cookie)
 			if post.Content != "<p>Post with image</p>" {

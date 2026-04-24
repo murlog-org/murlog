@@ -272,7 +272,7 @@ func TestPostsUpdateContentTooLong(t *testing.T) {
 	// Create a post first. / まず投稿を作成。
 	var post postJSON
 	rpcCallWithCookie(t, env, "posts.create", map[string]any{
-		"content": "<p>short</p>",
+		"content": "short",
 	}, &post, cookie)
 
 	// Update with 3001 runes → rejected / 3001 rune で更新 → 拒否
@@ -293,8 +293,10 @@ func TestPostsUpdateContentTooLong(t *testing.T) {
 	rpcCallWithCookie(t, env, "posts.update", map[string]any{
 		"id": post.ID, "content": exactContent,
 	}, &updated, cookie)
-	if len([]rune(updated.Content)) != 3000 {
-		t.Fatalf("posts.update content length = %d, want 3000", len([]rune(updated.Content)))
+	// Content is wrapped in <p>...</p> (+7 chars) by formatPostContent.
+	// formatPostContent で <p>...</p> に囲まれる (+7 文字)。
+	if len([]rune(updated.Content)) != 3007 {
+		t.Fatalf("posts.update content length = %d, want 3007 (3000 + <p></p>)", len([]rune(updated.Content)))
 	}
 }
 

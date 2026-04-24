@@ -174,11 +174,11 @@ export function My({ path }: { path?: string }) {
 
 	const handleEditStart = (post: Post) => {
 		setEditingId(post.id);
-		setEditContent(post.content);
+		setEditContent(post.content_source || post.content);
 	};
 
 	const handleEditSave = async (id: string) => {
-		const { error: err } = await call("posts.update", {
+		const { result: updated, error: err } = await call<Post>("posts.update", {
 			id,
 			content: editContent,
 		});
@@ -187,9 +187,9 @@ export function My({ path }: { path?: string }) {
 			return;
 		}
 		setEditingId(null);
-		setPosts((prev) =>
-			prev.map((p) => (p.id === id ? { ...p, content: editContent } : p)),
-		);
+		if (updated) {
+			setPosts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+		}
 	};
 
 	return (

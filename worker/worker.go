@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -18,6 +19,7 @@ import (
 	"github.com/murlog-org/murlog/id"
 	"github.com/murlog-org/murlog/internal/mediautil"
 	"github.com/murlog-org/murlog/media"
+	"github.com/murlog-org/murlog/hashtag"
 	"github.com/murlog-org/murlog/mention"
 	"github.com/murlog-org/murlog/queue"
 	"github.com/murlog-org/murlog/store"
@@ -435,6 +437,18 @@ func (w *Worker) handleDeliverPost(ctx context.Context, job *murlog.QueueJob) er
 	// 重複配送を防ぐため、既に enqueue 済みの Actor URI を追跡。
 	delivered := make(map[string]bool)
 
+	// Render text content to HTML before mention processing.
+	// メンション処理前にテキストコンテンツを HTML に変換。
+	if post.ContentType == murlog.ContentTypeText {
+		base := w.baseURL(ctx)
+		post.Content = renderTextToHTML(post.Content, base)
+		if len(post.ContentMap) > 0 {
+			for lang, text := range post.ContentMap {
+				post.ContentMap[lang] = renderTextToHTML(text, base)
+			}
+		}
+	}
+
 	// Resolve mentions: parse @user@domain, lookup actors, replace with HTML links.
 	// メンション解決: @user@domain をパースし、Actor を検索、HTML リンクに変換。
 	mentionAccts := mention.ParseMentions(post.Content)
@@ -616,6 +630,7 @@ func (w *Worker) handleDeliverNote(ctx context.Context, job *murlog.QueueJob) er
 		cc = []string{actorURI + "/followers"}
 	}
 
+
 	note := activitypub.Note{
 		Context:      "https://www.w3.org/ns/activitystreams",
 		ID:           postURI,
@@ -783,14 +798,28 @@ func (w *Worker) handleDeliverUpdateNote(ctx context.Context, job *murlog.QueueJ
 		cc = []string{actorURI + "/followers"}
 	}
 
+	// Render text content to HTML for AP delivery.
+	// AP 配送用にテキストコンテンツを HTML に変換。
+	noteContent := post.Content
+	noteContentMap := post.ContentMap
+	if post.ContentType == murlog.ContentTypeText {
+		noteContent = renderTextToHTML(post.Content, w.baseURL(ctx))
+		if len(post.ContentMap) > 0 {
+			noteContentMap = make(map[string]string, len(post.ContentMap))
+			for lang, text := range post.ContentMap {
+				noteContentMap[lang] = renderTextToHTML(text, w.baseURL(ctx))
+			}
+		}
+	}
+
 	note := activitypub.Note{
 		Context:      "https://www.w3.org/ns/activitystreams",
 		ID:           postURI,
 		Type:         "Note",
 		AttributedTo: actorURI,
 		InReplyTo:    post.InReplyToURI,
-		Content:      post.Content,
-		ContentMap:   post.ContentMap,
+		Content:      noteContent,
+		ContentMap:   noteContentMap,
 		Summary:      post.Summary,
 		Sensitive:    post.Sensitive,
 		Published:    post.CreatedAt.UTC().Format(time.RFC3339),
@@ -1528,4 +1557,20 @@ func (w *Worker) handleFetchRemoteActor(ctx context.Context, job *murlog.QueueJo
 	// Force fetch (bypass 24h cache). / 強制フェッチ (24hキャッシュをバイパス)。
 	_, err = w.resolveActor(ctx, p.ActorURI, true)
 	return err
+}
+
+// renderTextToHTML converts plain text to HTML for AP delivery.
+// Same logic as handler.formatPostContent but avoids circular import.
+// プレーンテキストを AP 配送用 HTML に変換する。
+var urlReWorker = regexp.MustCompile(`https?://[^\s<>"]+`)
+
+func renderTextToHTML(text string, baseURL string) string {
+	escaped := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", "\"", "&quot;").Replace(text)
+	linked := urlReWorker.ReplaceAllStringFunc(escaped, func(rawURL string) string {
+		trimmed := strings.TrimRight(rawURL, ".,;:!?)")
+		suffix := rawURL[len(trimmed):]
+		return `<a href="` + trimmed + `" rel="nofollow noopener" target="_blank">` + trimmed + `</a>` + suffix
+	})
+	withTags := hashtag.ReplaceWithHTML(linked, baseURL)
+	return "<p>" + strings.ReplaceAll(withTags, "\n", "<br>") + "</p>"
 }
