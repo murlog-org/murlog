@@ -647,10 +647,26 @@ function TOTPSettings() {
 
 // DBMaintenance is the database backup and vacuum component.
 // DB バックアップと VACUUM コンポーネント。
+function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function DBMaintenance() {
 	const [vacuuming, setVacuuming] = useState(false);
 	const [result, setResult] = useState("");
 	const [error, setError] = useState("");
+	const [dbSize, setDbSize] = useState<number | null>(null);
+
+	useEffect(() => {
+		(async () => {
+			const { result: settings } = await call<{ db_size_bytes: number }>(
+				"site.get_settings",
+			);
+			if (settings) setDbSize(settings.db_size_bytes);
+		})();
+	}, []);
 
 	const handleVacuum = async () => {
 		setVacuuming(true);
@@ -674,6 +690,11 @@ function DBMaintenance() {
 			<h3 class="card-section-title">
 				{t("my.settings.backup") || "Database Backup"}
 			</h3>
+			{dbSize != null && (
+				<p class="meta" style={{ marginBottom: 8 }}>
+					{t("my.settings.db_size") || "Database size"}: {formatBytes(dbSize)}
+				</p>
+			)}
 			<div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
 				<a
 					href="/api/mur/v1/backup"

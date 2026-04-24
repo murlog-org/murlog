@@ -508,7 +508,7 @@ func TestMaxAttemptsMarksDead(t *testing.T) {
 			"actor_uri":   remote.URL + "/users/bob",
 		}),
 		Status:    murlog.JobPending,
-		Attempts:  MaxAttempts, // Already at max attempts.
+		Attempts:  murlog.MaxJobAttempts, // Already at max attempts.
 		NextRunAt: now,
 		CreatedAt: now,
 	}

@@ -3,13 +3,15 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"os"
 )
 
 // siteSettingsJSON is the API representation of site-wide settings.
 // サイト全体設定の API レスポンス表現。
 type siteSettingsJSON struct {
-	RobotsNoIndex bool `json:"robots_noindex"`
-	RobotsNoAI    bool `json:"robots_noai"`
+	RobotsNoIndex bool  `json:"robots_noindex"`
+	RobotsNoAI    bool  `json:"robots_noai"`
+	DBSizeBytes   int64 `json:"db_size_bytes"`
 }
 
 // rpcSiteGetSettings handles site.get_settings.
@@ -17,9 +19,16 @@ type siteSettingsJSON struct {
 func (h *Handler) rpcSiteGetSettings(ctx context.Context, _ json.RawMessage) (any, *rpcErr) {
 	noIndex, _ := h.store.GetSetting(ctx, SettingRobotsNoIndex)
 	noAI, _ := h.store.GetSetting(ctx, SettingRobotsNoAI)
+
+	var dbSize int64
+	if info, err := os.Stat(h.cfg.MainDBPath()); err == nil {
+		dbSize = info.Size()
+	}
+
 	return &siteSettingsJSON{
 		RobotsNoIndex: noIndex == "true",
 		RobotsNoAI:    noAI == "true",
+		DBSizeBytes:   dbSize,
 	}, nil
 }
 

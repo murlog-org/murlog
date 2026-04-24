@@ -213,6 +213,7 @@
   "login.failed": "Login failed",
 
   "my.about": "About",
+  "my.settings.db_size": "Database size",
   "my.error.load_failed": "Failed to load. Please try again.",
   "my.error.retry": "Retry",
   "my.error.outbox_failed": "Failed to load posts from this server."

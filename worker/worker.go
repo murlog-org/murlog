@@ -28,10 +28,6 @@ const (
 	// アイドル時のキューポーリング間隔。
 	PollInterval = 5 * time.Second
 
-	// MaxAttempts is the maximum number of attempts before giving up.
-	// 最大リトライ回数。
-	MaxAttempts = 5
-
 	// DefaultMinConcurrency is the default baseline for adaptive concurrency.
 	// アダプティブ並列度のデフォルト下限。
 	DefaultMinConcurrency = 8
@@ -316,9 +312,9 @@ func (w *Worker) process(ctx context.Context, job *murlog.QueueJob) {
 		if domain := domainFromPayload(job.Payload); domain != "" {
 			w.store.IncrementDomainFailure(ctx, domain, err.Error())
 		}
-		if job.Attempts >= MaxAttempts {
+		if job.Attempts >= murlog.MaxJobAttempts {
 			log.Printf("worker: job %s (%s) max attempts reached, giving up", job.ID, job.Type)
-			w.queue.Dead(ctx, job.ID, fmt.Sprintf("max attempts (%d) reached: %v", MaxAttempts, err))
+			w.queue.Dead(ctx, job.ID, fmt.Sprintf("max attempts (%d) reached: %v", murlog.MaxJobAttempts, err))
 			return
 		}
 		// Exponential backoff: 30s, 2m, 8m, 32m

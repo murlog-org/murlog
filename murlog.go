@@ -12,6 +12,10 @@ import (
 	"github.com/murlog-org/murlog/id"
 )
 
+// MaxJobAttempts is the maximum number of attempts before a job is marked dead.
+// ジョブが dead になるまでの最大試行回数。
+const MaxJobAttempts = 5
+
 // Version is the murlog version, injected at build time via -ldflags.
 // ビルド時に -ldflags で注入される murlog バージョン。
 var Version = "dev"

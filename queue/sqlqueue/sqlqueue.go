@@ -14,6 +14,7 @@ import (
 	"github.com/murlog-org/murlog/queue"
 )
 
+
 // now returns the current time. Replaceable in tests.
 // 現在時刻を返す。テスト時に差し替え可能。
 var now = time.Now
@@ -264,14 +265,27 @@ func (q *sqlQueue) List(ctx context.Context, status string, cursor string, limit
 
 // RecoverStale resets running jobs that have been stuck longer than the given duration.
 // CGI timeout or crash can leave jobs in running state permanently.
-// 指定時間以上 running のままのジョブを failed にリセットする。
-// CGI タイムアウトやクラッシュで running のまま放置されたジョブを回復する。
+// Jobs that have already reached MaxAttempts are marked dead instead of failed.
+// 指定時間以上 running のままのジョブを回復する。
+// MaxAttempts に達しているジョブは failed ではなく dead にする。
 func (q *sqlQueue) RecoverStale(ctx context.Context, staleAfter time.Duration) (int64, error) {
 	cutoff := now().Add(-staleAfter)
+	nowStr := formatTime(now())
+
+	// Mark stale jobs that have reached max attempts as dead.
+	// MaxAttempts に達した stale ジョブを dead にする。
+	q.db.ExecContext(ctx, `
+		UPDATE queue_jobs SET status = ?, last_error = 'recovered: stale + max attempts', completed_at = ?
+		WHERE status = ? AND next_run_at < ? AND attempts >= ?`,
+		int(murlog.JobDead), nowStr,
+		int(murlog.JobRunning), formatTime(cutoff), murlog.MaxJobAttempts)
+
+	// Recover remaining stale jobs as failed for retry.
+	// 残りの stale ジョブを failed にリセットしてリトライ。
 	res, err := q.db.ExecContext(ctx, `
 		UPDATE queue_jobs SET status = ?, last_error = 'recovered: stale running job', next_run_at = ?
 		WHERE status = ? AND next_run_at < ?`,
-		int(murlog.JobFailed), formatTime(now()),
+		int(murlog.JobFailed), nowStr,
 		int(murlog.JobRunning), formatTime(cutoff))
 	if err != nil {
 		return 0, err

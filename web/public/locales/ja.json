@@ -213,6 +213,7 @@
   "login.failed": "ログインに失敗しました",
 
   "my.about": "murlogについて",
+  "my.settings.db_size": "データベースサイズ",
   "my.error.load_failed": "読み込みに失敗しました。もう一度お試しください。",
   "my.error.retry": "リトライ",
   "my.error.outbox_failed": "このサーバーからの投稿の取得に失敗しました。"
