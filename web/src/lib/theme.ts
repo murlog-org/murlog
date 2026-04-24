@@ -76,6 +76,7 @@ export async function loadTheme(name: string): Promise<ThemeCache> {
 		,
 		configRes,
 		postArticleRes,
+		profileCardRes,
 		homeRes,
 		profileRes,
 		postRes,
@@ -85,6 +86,7 @@ export async function loadTheme(name: string): Promise<ThemeCache> {
 		loadI18n(),
 		fetch(`${basePath}/theme.json${qs}`),
 		fetch(`${basePath}/templates/post-article.hbs${qs}`),
+		fetch(`${basePath}/templates/profile-card.hbs${qs}`),
 		fetch(`${basePath}/templates/home.hbs${qs}`),
 		fetch(`${basePath}/templates/profile.hbs${qs}`),
 		fetch(`${basePath}/templates/post.hbs${qs}`),
@@ -94,6 +96,7 @@ export async function loadTheme(name: string): Promise<ThemeCache> {
 
 	const config: ThemeConfig = await configRes.json();
 	const postArticleSrc = await postArticleRes.text();
+	const profileCardSrc = await profileCardRes.text();
 	const homeSrc = await homeRes.text();
 	const profileSrc = await profileRes.text();
 	const postSrc = await postRes.text();
@@ -103,6 +106,7 @@ export async function loadTheme(name: string): Promise<ThemeCache> {
 	// Register partials before compiling templates.
 	// テンプレートコンパイル前にパーシャルを登録。
 	Handlebars.registerPartial("post-article", postArticleSrc);
+	Handlebars.registerPartial("profile-card", profileCardSrc);
 
 	// Compile templates.
 	const templates: Record<string, HandlebarsTemplateDelegate> = {

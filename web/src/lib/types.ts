@@ -10,6 +10,7 @@ export type Account = {
 	username: string;
 	display_name: string;
 	summary: string;
+	summary_html?: string;
 	fields?: { name: string; value: string }[];
 	avatar_url: string;
 	header_url?: string;

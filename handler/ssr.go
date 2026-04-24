@@ -274,7 +274,7 @@ func (h *Handler) renderHome(w http.ResponseWriter, r *http.Request) {
 		homePersonas = append(homePersonas, homePersonaData{
 			Username:    p.Username,
 			DisplayName: displayName,
-			Summary:     sanitizeHTML(p.Summary),
+			Summary:     sanitizeHTML(h.formatBio(ctx, p.Summary)),
 			AvatarURL:   h.resolveMediaURL(base, p.AvatarPath),
 			HeaderURL:   h.resolveMediaURL(base, p.HeaderPath),
 			ProfileURL:  profileURL,
@@ -352,7 +352,7 @@ func (h *Handler) renderProfile(w http.ResponseWriter, r *http.Request, persona 
 		Domain:        domain,
 		Username:      persona.Username,
 		DisplayName:   displayName,
-		Summary:       sanitizeHTML(persona.Summary),
+		Summary:       sanitizeHTML(h.formatBio(r.Context(), persona.Summary)),
 		AvatarURL:     h.resolveMediaURL(base, persona.AvatarPath),
 		HeaderURL:     h.resolveMediaURL(base, persona.HeaderPath),
 		ProfileURL:    profileURL,

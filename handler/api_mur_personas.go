@@ -3,12 +3,24 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"html"
+	"strings"
 	"time"
 
 	"github.com/murlog-org/murlog"
 	"github.com/murlog-org/murlog/activitypub"
+	"github.com/murlog-org/murlog/hashtag"
 	"github.com/murlog-org/murlog/id"
 )
+
+// formatBio converts a plain-text bio to HTML (escape + hashtag links + line breaks).
+// プレーンテキストの bio を HTML に変換する (エスケープ + ハッシュタグリンク + 改行)。
+func (h *Handler) formatBio(ctx context.Context, text string) string {
+	base := h.baseURLFromCtx(ctx)
+	escaped := html.EscapeString(text)
+	withTags := hashtag.ReplaceWithHTML(escaped, base)
+	return strings.ReplaceAll(withTags, "\n", "<br>")
+}
 
 // rpcPersonasList handles personas.list.
 // ペルソナ一覧を返す。

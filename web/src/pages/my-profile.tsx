@@ -319,10 +319,10 @@ export function MyProfile({ username }: Props) {
 								</div>
 							)}
 						</div>
-						{actor.summary && (
+						{actor.summary_html && (
 							<div
 								class="bio"
-								dangerouslySetInnerHTML={{ __html: actor.summary }}
+								dangerouslySetInnerHTML={{ __html: actor.summary_html }}
 							/>
 						)}
 						{actor.fields && actor.fields.length > 0 && (

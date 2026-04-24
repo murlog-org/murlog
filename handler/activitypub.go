@@ -69,6 +69,9 @@ func (h *Handler) handleActor(w http.ResponseWriter, r *http.Request) {
 	actor := activitypub.BuildLocalActor(persona, base, func(path string) string {
 		return h.resolveMediaURL(base, path)
 	})
+	// AP summary should be HTML (other servers expect it).
+	// AP の summary は HTML であるべき (他サーバーがそう期待する)。
+	actor.Summary = h.formatBio(r.Context(), persona.Summary)
 
 	w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
 	w.Header().Set("Cache-Control", "max-age=300, public")

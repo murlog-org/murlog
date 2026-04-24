@@ -17,6 +17,7 @@ type accountJSON struct {
 	Username       string               `json:"username"`
 	DisplayName    string               `json:"display_name"`
 	Summary        string               `json:"summary"`
+	SummaryHTML    string               `json:"summary_html,omitempty"`
 	Fields         []murlog.CustomField  `json:"fields,omitempty"`
 	AvatarURL      string               `json:"avatar_url,omitempty"`
 	HeaderURL      string               `json:"header_url,omitempty"`
@@ -45,6 +46,7 @@ func (h *Handler) toAccountFromPersona(ctx context.Context, base string, p *murl
 		Username:       p.Username,
 		DisplayName:    p.DisplayName,
 		Summary:        p.Summary,
+		SummaryHTML:    h.formatBio(ctx, p.Summary),
 		Fields:         fields,
 		AvatarURL:      h.resolveMediaURL(base, p.AvatarPath),
 		HeaderURL:      h.resolveMediaURL(base, p.HeaderPath),
@@ -68,7 +70,7 @@ func toAccountFromRemoteActor(ra *murlog.RemoteActor) accountJSON {
 		Acct:        formatAcct(ra),
 		Username:    ra.Username,
 		DisplayName: ra.DisplayName,
-		Summary:     ra.Summary,
+		SummaryHTML: ra.Summary,
 		AvatarURL:   ra.AvatarURL,
 		HeaderURL:   ra.HeaderURL,
 		FeaturedURL: ra.FeaturedURL,
