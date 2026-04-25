@@ -1,6 +1,3 @@
--- murlog schema v1 — consolidated from migrations 001-018.
--- murlog スキーマ v1 — マイグレーション 001-018 を統合。
-
 -- Personas: local ActivityPub actors (one per account).
 -- ペルソナ: ローカル ActivityPub Actor (アカウントごとに1つ)。
 CREATE TABLE IF NOT EXISTS personas (
