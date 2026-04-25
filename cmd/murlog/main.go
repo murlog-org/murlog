@@ -152,7 +152,11 @@ func runWorker() {
 	timeout := fs.Int("timeout", 30, "timeout in seconds per batch")
 	fs.Parse(os.Args[2:])
 
-	a := loadApp()
+	cfg := loadConfig()
+	a, err := app.New(cfg)
+	if err != nil {
+		log.Fatalf("app: %v", err)
+	}
 	defer a.Close()
 
 	w := a.Worker()
@@ -160,7 +164,7 @@ func runWorker() {
 	if *once {
 		// Acquire exclusive lock to prevent concurrent worker processes.
 		// 排他ロックで同時実行を防止。
-		unlock, ok := tryWorkerLock()
+		unlock, ok := tryWorkerLock(cfg.DataDir)
 		if !ok {
 			log.Println("worker: another worker is running, exiting")
 			return
@@ -196,8 +200,8 @@ func runWorker() {
 // Returns an unlock function and true if acquired, or false if another worker holds the lock.
 // ロックファイルに排他 flock を取得する。
 // 取得できたら unlock 関数と true、他の worker がロック中なら false を返す。
-func tryWorkerLock() (unlock func(), ok bool) {
-	lockPath := filepath.Join(workerDir(), "worker.lock")
+func tryWorkerLock(dataDir string) (unlock func(), ok bool) {
+	lockPath := filepath.Join(dataDir, "worker.lock")
 	f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		log.Printf("worker: open lock file: %v", err)
@@ -218,18 +222,6 @@ func tryWorkerLock() (unlock func(), ok bool) {
 	}, true
 }
 
-// workerDir returns the directory for the worker lock file.
-// worker ロックファイルのディレクトリを返す。
-func workerDir() string {
-	if sf := os.Getenv("SCRIPT_FILENAME"); sf != "" {
-		return filepath.Dir(sf)
-	}
-	exe, err := os.Executable()
-	if err != nil {
-		return "."
-	}
-	return filepath.Dir(exe)
-}
 
 // kickWorkerTick sends a fire-and-forget HTTP request to the worker-tick endpoint.
 // worker-tick エンドポイントに fire-and-forget リクエストを送る。
