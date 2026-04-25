@@ -437,18 +437,6 @@ func (w *Worker) handleDeliverPost(ctx context.Context, job *murlog.QueueJob) er
 	// 重複配送を防ぐため、既に enqueue 済みの Actor URI を追跡。
 	delivered := make(map[string]bool)
 
-	// Render text content to HTML before mention processing.
-	// メンション処理前にテキストコンテンツを HTML に変換。
-	if post.ContentType == murlog.ContentTypeText {
-		base := w.baseURL(ctx)
-		post.Content = renderTextToHTML(post.Content, base)
-		if len(post.ContentMap) > 0 {
-			for lang, text := range post.ContentMap {
-				post.ContentMap[lang] = renderTextToHTML(text, base)
-			}
-		}
-	}
-
 	// Resolve mentions: parse @user@domain, lookup actors, replace with HTML links.
 	// メンション解決: @user@domain をパースし、Actor を検索、HTML リンクに変換。
 	mentionAccts := mention.ParseMentions(post.Content)
@@ -497,20 +485,8 @@ func (w *Worker) handleDeliverPost(ctx context.Context, job *murlog.QueueJob) er
 		}
 
 		if len(resolved) > 0 {
-			// Replace @user@domain with HTML links in content.
-			// コンテンツ中の @user@domain を HTML リンクに置換。
-			post.Content = mention.ReplaceWithHTML(post.Content, resolved)
-
-			// Also update contentMap if present.
-			// contentMap があればそちらも更新。
-			if len(post.ContentMap) > 0 {
-				for lang, text := range post.ContentMap {
-					post.ContentMap[lang] = mention.ReplaceWithHTML(text, resolved)
-				}
-			}
-
-			// Store resolved mentions on the post.
-			// 解決済みメンションを投稿に保存。
+			// Store resolved mentions (content HTML replacement is done at Note build time).
+			// 解決済みメンションを保存 (content の HTML 置換は Note 構築時に行う)。
 			mentions := make([]murlog.Mention, 0, len(resolved))
 			for _, rm := range resolved {
 				mentions = append(mentions, murlog.Mention{Acct: rm.Acct, Href: rm.ActorURI})
@@ -632,14 +608,39 @@ func (w *Worker) handleDeliverNote(ctx context.Context, job *murlog.QueueJob) er
 	}
 
 
+	// Render text content to HTML for AP delivery.
+	// AP 配送用にテキストコンテンツを HTML に変換。
+	noteContent := post.Content
+	noteContentMap := post.ContentMap
+	if post.ContentType == murlog.ContentTypeText {
+		noteContent = renderTextToHTML(post.Content, base)
+		if len(post.ContentMap) > 0 {
+			noteContentMap = make(map[string]string, len(post.ContentMap))
+			for lang, text := range post.ContentMap {
+				noteContentMap[lang] = renderTextToHTML(text, base)
+			}
+		}
+		// Apply mention links. / メンションリンクを適用。
+		if mentions := post.Mentions(); len(mentions) > 0 {
+			resolved := make(map[string]mention.Resolved, len(mentions))
+			for _, m := range mentions {
+				resolved[m.Acct] = mention.Resolved{Acct: m.Acct, ActorURI: m.Href, ProfileURL: m.Href}
+			}
+			noteContent = mention.ReplaceWithHTML(noteContent, resolved)
+			for lang, text := range noteContentMap {
+				noteContentMap[lang] = mention.ReplaceWithHTML(text, resolved)
+			}
+		}
+	}
+
 	note := activitypub.Note{
 		Context:      "https://www.w3.org/ns/activitystreams",
 		ID:           postURI,
 		Type:         "Note",
 		AttributedTo: actorURI,
 		InReplyTo:    post.InReplyToURI,
-		Content:      post.Content,
-		ContentMap:   post.ContentMap,
+		Content:      noteContent,
+		ContentMap:   noteContentMap,
 		Summary:      post.Summary,
 		Sensitive:    post.Sensitive,
 		Published:    post.CreatedAt.UTC().Format(time.RFC3339),
