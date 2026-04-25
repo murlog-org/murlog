@@ -1406,14 +1406,18 @@ func (w *Worker) handleDeliverAnnounce(ctx context.Context, job *murlog.QueueJob
 	actorURI := base + "/users/" + persona.Username
 	keyID := actorURI + "#main-key"
 
-	var activity interface{}
+	var act activitypub.Activity
 	if p.Activity == "Undo" {
-		activity = activitypub.NewUndoActivity(actorURI+"#undo-announce/"+job.ID.String(), actorURI, "Announce", actorURI+"#announces/"+job.ID.String(), p.PostURI)
+		act = activitypub.NewUndoActivity(actorURI+"#undo-announce/"+job.ID.String(), actorURI, "Announce", actorURI+"#announces/"+job.ID.String(), p.PostURI)
 	} else {
-		activity = activitypub.NewActivity(actorURI+"#announces/"+job.ID.String(), "Announce", actorURI, p.PostURI)
+		act = activitypub.NewActivity(actorURI+"#announces/"+job.ID.String(), "Announce", actorURI, p.PostURI)
 	}
+	// Mastodon/Misskey require to/cc to determine visibility of Announce activities.
+	// Mastodon/Misskey は Announce の公開範囲判定に to/cc を参照する。
+	act.To = []string{"https://www.w3.org/ns/activitystreams#Public"}
+	act.CC = []string{actorURI + "/followers"}
 
-	return activitypub.Deliver(keyID, persona.PrivateKeyPEM, actor.Inbox, activity)
+	return activitypub.Deliver(keyID, persona.PrivateKeyPEM, actor.Inbox, act)
 }
 
 // send_undo_announce payload — send Undo Announce to all followers + post author.

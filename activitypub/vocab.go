@@ -42,11 +42,13 @@ type PublicKey struct {
 // Activity represents a generic ActivityPub activity.
 // 汎用の ActivityPub Activity を表す。
 type Activity struct {
-	Context interface{} `json:"@context"`
-	ID      string      `json:"id"`
-	Type    string      `json:"type"`
-	Actor   string      `json:"actor"`
-	Object  interface{} `json:"object"`
+	Context interface{}   `json:"@context"`
+	ID      string        `json:"id"`
+	Type    string        `json:"type"`
+	Actor   string        `json:"actor"`
+	Object  interface{}   `json:"object"`
+	To      []string      `json:"to,omitempty"`
+	CC      []string      `json:"cc,omitempty"`
 }
 
 // Note represents an ActivityPub Note object.
@@ -57,6 +59,7 @@ type Note struct {
 	Type         string            `json:"type"`
 	AttributedTo string            `json:"attributedTo"`
 	InReplyTo    string            `json:"inReplyTo,omitempty"`    // parent note URI / リプライ先 Note URI
+	URL          string            `json:"url,omitempty"`          // human-readable permalink / パーマリンク
 	Content      string            `json:"content"`
 	ContentMap   map[string]string `json:"contentMap,omitempty"`   // lang -> content / 言語別コンテンツ
 	Summary      string            `json:"summary,omitempty"`      // CW text / CW テキスト

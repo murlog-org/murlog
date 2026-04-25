@@ -478,59 +478,8 @@ func (h *Handler) renderPostActivityPub(w http.ResponseWriter, r *http.Request, 
 	base := h.baseURL(r)
 	actorURL := base + "/users/" + persona.Username
 
-	note := map[string]interface{}{
-		"@context":     "https://www.w3.org/ns/activitystreams",
-		"id":           actorURL + "/posts/" + post.ID.String(),
-		"type":         "Note",
-		"attributedTo": actorURL,
-		"content":      post.Content,
-		"published":    post.CreatedAt.UTC().Format(time.RFC3339),
-		"to":           []string{"https://www.w3.org/ns/activitystreams#Public"},
-	}
-
-	// Include mention and hashtag tags. / メンション・ハッシュタグタグを含める。
-	var tags []map[string]string
-	for _, m := range post.Mentions() {
-		tags = append(tags, map[string]string{
-			"type": "Mention",
-			"href": m.Href,
-			"name": "@" + m.Acct,
-		})
-	}
-	for _, ht := range post.Hashtags() {
-		tags = append(tags, map[string]string{
-			"type": "Hashtag",
-			"href": base + "/tags/" + ht,
-			"name": "#" + ht,
-		})
-	}
-	if len(tags) > 0 {
-		note["tag"] = tags
-	}
-
-	// Include attachments in JSON-LD. / JSON-LD に添付ファイルを含める。
-	atts, _ := h.store.ListAttachmentsByPost(r.Context(), post.ID)
-	if len(atts) > 0 {
-		var apAtts []map[string]interface{}
-		for _, a := range atts {
-			apAtt := map[string]interface{}{
-				"type":      "Document",
-				"mediaType": a.MimeType,
-				"url":       h.attachmentURL(base, a),
-			}
-			if a.Alt != "" {
-				apAtt["name"] = a.Alt
-			}
-			if a.Width > 0 {
-				apAtt["width"] = a.Width
-			}
-			if a.Height > 0 {
-				apAtt["height"] = a.Height
-			}
-			apAtts = append(apAtts, apAtt)
-		}
-		note["attachment"] = apAtts
-	}
+	note := h.buildLocalNote(r.Context(), base, actorURL, post)
+	note.Context = "https://www.w3.org/ns/activitystreams"
 
 	w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
 	json.NewEncoder(w).Encode(note)

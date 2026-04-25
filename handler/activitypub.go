@@ -388,11 +388,27 @@ func (h *Handler) handleInboxAnnounce(w http.ResponseWriter, r *http.Request, pe
 		return
 	}
 
-	// Non-local post: fetch the remote Note and store as a reblogged post.
-	// リモート投稿: Note をフェッチしてリブログ投稿として保存。
-
-	// Idempotent: skip if already received. / 冪等: 既に受信済みならスキップ。
-	if _, err := h.store.GetPostByURI(ctx, objectURI); err == nil {
+	// Non-local post: the announced Note may already be stored (e.g. we follow the
+	// author directly). In that case, create a wrapper post referencing the existing
+	// post so the reblog appears on the timeline. Otherwise fetch and store the Note.
+	// リモート投稿: 元 Note が既に保存済みの場合 (著者を直接フォローしている等) は、
+	// 既存投稿を参照する wrapper post を作成してタイムラインにリブログを表示する。
+	// 未保存の場合は Note をフェッチして保存する。
+	if existing, err := h.store.GetPostByURI(ctx, objectURI); err == nil {
+		h.ensureRemoteActorCached(ctx, activity.Actor, persona)
+		now := time.Now()
+		wrapper := &murlog.Post{
+			ID:             id.New(),
+			PersonaID:      persona.ID,
+			Origin:         "remote",
+			ReblogOfPostID: existing.ID,
+			RebloggedByURI: activity.Actor,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		if err := h.store.CreatePost(ctx, wrapper); err != nil {
+			log.Printf("inbox: リブログ wrapper post の作成に失敗 / failed to create reblog wrapper: %v", err)
+		}
 		w.WriteHeader(http.StatusAccepted)
 		return
 	}
@@ -1065,64 +1081,7 @@ func (h *Handler) handleOutbox(w http.ResponseWriter, r *http.Request) {
 		}
 
 		postURI := actorURL + "/posts/" + post.ID.String()
-
-		to := []string{"https://www.w3.org/ns/activitystreams#Public"}
-		cc := []string{actorURL + "/followers"}
-		if post.Visibility == murlog.VisibilityUnlisted {
-			to, cc = cc, to
-		}
-
-		// Render content for AP delivery.
-		// AP 配送用にコンテンツをレンダリング。
-		noteContent := post.Content
-		noteContentMap := post.ContentMap
-		if post.ContentType == murlog.ContentTypeText {
-			noteContent = formatPostContent(post.Content, base)
-			if len(post.ContentMap) > 0 {
-				noteContentMap = make(map[string]string, len(post.ContentMap))
-				for lang, text := range post.ContentMap {
-					noteContentMap[lang] = formatPostContent(text, base)
-				}
-			}
-			// Apply mention links. / メンションリンクを適用。
-			if mentions := post.Mentions(); len(mentions) > 0 {
-				resolved := make(map[string]mention.Resolved, len(mentions))
-				for _, m := range mentions {
-					resolved[m.Acct] = mention.Resolved{Acct: m.Acct, ActorURI: m.Href, ProfileURL: m.Href}
-				}
-				noteContent = mention.ReplaceWithHTML(noteContent, resolved)
-				for lang, text := range noteContentMap {
-					noteContentMap[lang] = mention.ReplaceWithHTML(text, resolved)
-				}
-			}
-		}
-
-		note := activitypub.Note{
-			ID:           postURI,
-			Type:         "Note",
-			AttributedTo: actorURL,
-			Content:      noteContent,
-			ContentMap:   noteContentMap,
-			Summary:      post.Summary,
-			Sensitive:    post.Sensitive,
-			Published:    post.CreatedAt.UTC().Format(time.RFC3339),
-			To:           to,
-			CC:           cc,
-		}
-
-		// Attach media if present. / メディアがあれば添付。
-		atts, _ := h.store.ListAttachmentsByPost(ctx, post.ID)
-		for _, a := range atts {
-			note.Attachment = append(note.Attachment, activitypub.NoteAttachment{
-				Type:      "Document",
-				MediaType: a.MimeType,
-				URL:       h.resolveMediaURL(base, a.FilePath),
-				Name:      a.Alt,
-				Width:     a.Width,
-				Height:    a.Height,
-			})
-		}
-
+		note := h.buildLocalNote(ctx, base, actorURL, post)
 		items = append(items, activitypub.NewActivity(postURI+"/activity", "Create", actorURL, note))
 	}
 
@@ -1131,6 +1090,82 @@ func (h *Handler) handleOutbox(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=300")
 	json.NewEncoder(w).Encode(collection)
+}
+
+// buildLocalNote constructs an AP Note from a local post with HTML rendering.
+// Shared by outbox and individual post AP endpoint.
+// ローカル投稿から HTML レンダリング済み AP Note を構築する。
+// outbox と個別投稿 AP エンドポイントで共用。
+func (h *Handler) buildLocalNote(ctx context.Context, base, actorURL string, post *murlog.Post) activitypub.Note {
+	postURI := actorURL + "/posts/" + post.ID.String()
+
+	to := []string{"https://www.w3.org/ns/activitystreams#Public"}
+	cc := []string{actorURL + "/followers"}
+	if post.Visibility == murlog.VisibilityUnlisted {
+		to, cc = cc, to
+	}
+
+	// Render content for AP delivery.
+	// AP 配送用にコンテンツをレンダリング。
+	noteContent := post.Content
+	noteContentMap := post.ContentMap
+	if post.ContentType == murlog.ContentTypeText {
+		noteContent = formatPostContent(post.Content, base)
+		if len(post.ContentMap) > 0 {
+			noteContentMap = make(map[string]string, len(post.ContentMap))
+			for lang, text := range post.ContentMap {
+				noteContentMap[lang] = formatPostContent(text, base)
+			}
+		}
+		// Apply mention links. / メンションリンクを適用。
+		if mentions := post.Mentions(); len(mentions) > 0 {
+			resolved := make(map[string]mention.Resolved, len(mentions))
+			for _, m := range mentions {
+				resolved[m.Acct] = mention.Resolved{Acct: m.Acct, ActorURI: m.Href, ProfileURL: m.Href}
+			}
+			noteContent = mention.ReplaceWithHTML(noteContent, resolved)
+			for lang, text := range noteContentMap {
+				noteContentMap[lang] = mention.ReplaceWithHTML(text, resolved)
+			}
+		}
+	}
+
+	note := activitypub.Note{
+		ID:           postURI,
+		Type:         "Note",
+		AttributedTo: actorURL,
+		URL:          postURI,
+		Content:      noteContent,
+		ContentMap:   noteContentMap,
+		Summary:      post.Summary,
+		Sensitive:    post.Sensitive,
+		Published:    post.CreatedAt.UTC().Format(time.RFC3339),
+		To:           to,
+		CC:           cc,
+	}
+
+	// Include mention and hashtag tags. / メンション・ハッシュタグタグを含める。
+	for _, m := range post.Mentions() {
+		note.Tag = append(note.Tag, activitypub.NoteTag{Type: "Mention", Href: m.Href, Name: "@" + m.Acct})
+	}
+	for _, ht := range post.Hashtags() {
+		note.Tag = append(note.Tag, activitypub.NoteTag{Type: "Hashtag", Href: base + "/tags/" + ht, Name: "#" + ht})
+	}
+
+	// Attach media if present. / メディアがあれば添付。
+	atts, _ := h.store.ListAttachmentsByPost(ctx, post.ID)
+	for _, a := range atts {
+		note.Attachment = append(note.Attachment, activitypub.NoteAttachment{
+			Type:      "Document",
+			MediaType: a.MimeType,
+			URL:       h.attachmentURL(base, a),
+			Name:      a.Alt,
+			Width:     a.Width,
+			Height:    a.Height,
+		})
+	}
+
+	return note
 }
 
 // handleFollowersCollection serves the Followers collection with real data.
