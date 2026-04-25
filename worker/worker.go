@@ -527,8 +527,9 @@ func (w *Worker) handleDeliverPost(ctx context.Context, job *murlog.QueueJob) er
 					}))
 			}
 
-			post.UpdatedAt = time.Now()
-			w.store.UpdatePost(ctx, post)
+			// Save only mentions_json to DB (don't overwrite plain text content with rendered HTML).
+			// DB には mentions_json だけ保存 (レンダリング済み HTML でプレーンテキストを上書きしない)。
+			w.store.UpdatePostMentions(ctx, post.ID, post.MentionsJSON)
 		}
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/murlog-org/murlog"
 	"github.com/murlog-org/murlog/hashtag"
 	"github.com/murlog-org/murlog/id"
+	"github.com/murlog-org/murlog/mention"
 )
 
 // postJSON is the API representation of a Post.
@@ -132,6 +133,22 @@ func (h *Handler) enrichPostJSONWith(ctx context.Context, p *murlog.Post, person
 				rendered[lang] = formatPostContent(text, base)
 			}
 			pj.ContentMap = rendered
+		}
+		// Apply mention links from stored mentions_json.
+		// 保存済み mentions_json からメンションリンクを適用。
+		if mentions := p.Mentions(); len(mentions) > 0 {
+			resolved := make(map[string]mention.Resolved, len(mentions))
+			for _, m := range mentions {
+				resolved[m.Acct] = mention.Resolved{
+					Acct:       m.Acct,
+					ActorURI:   m.Href,
+					ProfileURL: m.Href,
+				}
+			}
+			pj.Content = mention.ReplaceWithHTML(pj.Content, resolved)
+			for lang, text := range pj.ContentMap {
+				pj.ContentMap[lang] = mention.ReplaceWithHTML(text, resolved)
+			}
 		}
 	}
 

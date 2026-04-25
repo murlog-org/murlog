@@ -1084,6 +1084,17 @@ func (h *Handler) handleOutbox(w http.ResponseWriter, r *http.Request) {
 					noteContentMap[lang] = formatPostContent(text, base)
 				}
 			}
+			// Apply mention links. / メンションリンクを適用。
+			if mentions := post.Mentions(); len(mentions) > 0 {
+				resolved := make(map[string]mention.Resolved, len(mentions))
+				for _, m := range mentions {
+					resolved[m.Acct] = mention.Resolved{Acct: m.Acct, ActorURI: m.Href, ProfileURL: m.Href}
+				}
+				noteContent = mention.ReplaceWithHTML(noteContent, resolved)
+				for lang, text := range noteContentMap {
+					noteContentMap[lang] = mention.ReplaceWithHTML(text, resolved)
+				}
+			}
 		}
 
 		note := activitypub.Note{

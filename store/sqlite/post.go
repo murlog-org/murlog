@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/murlog-org/murlog"
 	"github.com/murlog-org/murlog/id"
@@ -180,6 +181,18 @@ func (s *sqliteStore) UpdatePost(ctx context.Context, p *murlog.Post) error {
 		return fmt.Errorf("update post: %w", err)
 	}
 	s.syncPostTags(ctx, p)
+	return nil
+}
+
+// UpdatePostMentions updates only the mentions_json field of a post.
+// 投稿の mentions_json フィールドのみ更新する。
+func (s *sqliteStore) UpdatePostMentions(ctx context.Context, postID id.ID, mentionsJSON string) error {
+	_, err := s.db.ExecContext(ctx,
+		`UPDATE posts SET mentions_json = ?, updated_at = ? WHERE id = ?`,
+		nullString(mentionsJSON), formatTime(time.Now()), postID.Bytes())
+	if err != nil {
+		return fmt.Errorf("update post mentions: %w", err)
+	}
 	return nil
 }
 

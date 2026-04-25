@@ -28,6 +28,7 @@ type Store interface {
 	ListPublicLocalPosts(ctx context.Context, personaID id.ID, cursor id.ID, limit int) ([]*murlog.Post, error)
 	CreatePost(ctx context.Context, p *murlog.Post) error
 	UpdatePost(ctx context.Context, p *murlog.Post) error
+	UpdatePostMentions(ctx context.Context, postID id.ID, mentionsJSON string) error
 	DeletePost(ctx context.Context, pid id.ID) error
 	DeleteReblogPost(ctx context.Context, personaID id.ID, reblogOfPostID id.ID) error
 	GetPostByURI(ctx context.Context, uri string) (*murlog.Post, error)
