@@ -193,7 +193,13 @@ func (h *Handler) rpcReblogsCreate(ctx context.Context, params json.RawMessage) 
 	// 投稿 URI を解決: リモートは URI あり、ローカルは構築。
 	postURI := post.URI
 	if postURI == "" {
-		postURI = base + "/users/" + persona.Username + "/posts/" + post.ID.String()
+		// Local post: need the original author's username, not the reblogger's.
+		// ローカル投稿: リブログ者ではなく元投稿の著者の username が必要。
+		author, err := h.store.GetPersona(ctx, post.PersonaID)
+		if err != nil {
+			return nil, newRPCErr(codeInternalError, "internal error")
+		}
+		postURI = base + "/users/" + author.Username + "/posts/" + post.ID.String()
 	}
 
 	now := time.Now()
@@ -286,7 +292,11 @@ func (h *Handler) rpcReblogsDelete(ctx context.Context, params json.RawMessage) 
 	// Resolve post URI. / 投稿 URI を解決。
 	postURI := post.URI
 	if postURI == "" {
-		postURI = base + "/users/" + persona.Username + "/posts/" + post.ID.String()
+		author, err := h.store.GetPersona(ctx, post.PersonaID)
+		if err != nil {
+			return nil, newRPCErr(codeInternalError, "internal error")
+		}
+		postURI = base + "/users/" + author.Username + "/posts/" + post.ID.String()
 	}
 
 	targetActorURI := post.ActorURI
