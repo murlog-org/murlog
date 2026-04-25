@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Title}}</title>
+<meta property="og:title" content="{{.Title}}">
+<meta property="og:description" content="{{.Description}}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="{{.Permalink}}">
+<meta property="og:image" content="{{if .OGImage}}{{.OGImage}}{{else if .AvatarURL}}{{.AvatarURL}}{{else}}{{.BaseURL}}/ogp.png{{end}}">
+<meta property="og:site_name" content="{{.Domain}}">
+{{if .RobotsContent}}<meta name="robots" content="{{.RobotsContent}}">
+{{end}}<link rel="alternate" type="application/activity+json" href="{{.Permalink}}">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/assets/index.css?v=moec8i2a">
+<link id="theme-css-default" rel="stylesheet" href="{{.ThemeCSS}}">
+</head>
+<style>body.ssr #app{opacity:0}@media(prefers-color-scheme:dark){body.ssr{background:#161618}}</style>
+<body class="ssr">
+<div id="app">
+  <div class="ssr-content">
+    <div class="screen">
+      <article class="card">
+        <div class="post-header">
+          <div class="post-author">
+            {{if .AvatarURL}}<img class="post-avatar" src="{{.AvatarURL}}" alt="" width="40" height="40">{{end}}
+            <div>
+              <a href="{{.ProfileURL}}" class="post-author-name">{{.DisplayName}}</a>
+              <span class="handle">@{{.Username}}@{{.Domain}}</span>
+            </div>
+          </div>
+          <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.CreatedAt.Format "2006-01-02 15:04"}}</time>
+        </div>
+        <div class="post-content">{{.Content}}</div>
+      </article>
+    </div>
+  </div>
+</div>
+<script id="ssr-data" type="application/json">{{.SSRData}}</script>
+<script type="module" src="/assets/index.js?v=moec8i2a"></script>
+</body>
+</html>
