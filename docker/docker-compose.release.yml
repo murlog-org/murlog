@@ -2,8 +2,6 @@ services:
   murlog-cgi:
     build:
       context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8888:80"
+      dockerfile: Dockerfile.release
     environment:
       - MURLOG_PROTOCOL=http

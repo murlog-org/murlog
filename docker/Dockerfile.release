@@ -1,0 +1,22 @@
+FROM httpd:2.4
+
+# Enable required modules and include murlog config.
+# 必要なモジュールを有効化し、murlog 設定を読み込む。
+RUN sed -i \
+    -e 's/^[[:space:]]*#LoadModule cgid_module/LoadModule cgid_module/' \
+    -e 's/^[[:space:]]*#LoadModule cgi_module/LoadModule cgi_module/' \
+    -e 's/^[[:space:]]*#LoadModule rewrite_module/LoadModule rewrite_module/' \
+    /usr/local/apache2/conf/httpd.conf
+COPY httpd-murlog.conf /usr/local/apache2/conf/extra/httpd-murlog.conf
+RUN echo 'Include conf/extra/httpd-murlog.conf' >> /usr/local/apache2/conf/httpd.conf
+
+# Copy release zip contents (murlog.cgi wrapper + murlog.bin + dist/ + .htaccess + 500.html).
+# リリース zip の内容をコピー (CGI ラッパー + バイナリ + SPA + .htaccess + 500.html)。
+COPY release/ /usr/local/apache2/htdocs/
+
+# Set ownership and permissions.
+# パーミッション設定。
+RUN chmod 755 /usr/local/apache2/htdocs/murlog.cgi /usr/local/apache2/htdocs/murlog.bin && \
+    chown -R www-data:www-data /usr/local/apache2/htdocs/
+
+EXPOSE 80

@@ -38,6 +38,7 @@ docs/.vitepress/cache/
 docker/*.cgi
 docker/dist/
 docker/htaccess
+docker/release/
 
 # e2e
 tests/e2e/test-results/

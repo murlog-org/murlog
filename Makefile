@@ -1,4 +1,4 @@
-.PHONY: build serve cgi worker reset update test e2e e2e-s3 e2e-install dev web-install web-build theme-css docs docs-build godoc db-reset cross dist-cgi docker-cgi docker-cgi-test clean
+.PHONY: build serve cgi worker reset update test e2e e2e-s3 e2e-install dev web-install web-build theme-css docs docs-build godoc db-reset cross dist-cgi docker-cgi docker-cgi-test docker-cgi-release-test clean
 
 BIN := dist/murlog
 CMD := ./cmd/murlog
@@ -137,6 +137,22 @@ docker-cgi-test: docker-cgi
 	cd tests/e2e && BASE_URL=http://127.0.0.1:8888 npx playwright test; \
 	EXIT=$$?; \
 	cd ../../docker && docker compose down; \
+	exit $$EXIT
+
+# Release zip ベースの CGI テスト — dist-cgi の成果物を Apache コンテナで検証。
+# Release zip CGI test — verify dist-cgi artifact in Apache container.
+docker-cgi-release-test: dist-cgi
+	rm -rf docker/release
+	mkdir -p docker/release
+	unzip -o $(DIST)/murlog-cgi-linux-$(DOCKER_GOARCH).zip -d docker/release/
+	cd docker && docker compose -f docker-compose.yml -f docker-compose.release.yml build
+	cd docker && docker compose -f docker-compose.yml -f docker-compose.release.yml up -d
+	@echo "Waiting for Apache..."
+	@sleep 2
+	cd tests/e2e && BASE_URL=http://127.0.0.1:8888 npx playwright test; \
+	EXIT=$$?; \
+	cd ../../docker && docker compose -f docker-compose.yml -f docker-compose.release.yml down; \
+	rm -rf release; \
 	exit $$EXIT
 
 db-reset:
